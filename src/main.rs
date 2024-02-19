@@ -20,6 +20,14 @@ mod manual {
 }
 
 
+/*#[catch(404)]
+fn not_found(req: &Request) -> String {
+    format!("Oh no! We couldn't find the requested path '{}'", req.uri())
+}*/
+
+
+//No need to manually route pages as all satic files setup. might nedd to change if using templates in the future
+
 #[launch]
 fn rocket() -> _ {
     rocket::build()
