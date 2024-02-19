@@ -6,6 +6,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+etherparse = "0.14.2"
 linfa = "0.7.0"
 pcap = "1.2.0"
 rocket = "0.5.0"
