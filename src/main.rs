@@ -23,6 +23,13 @@ mod manual {
     }
 }
 
+#[post("/gettraffic")]
+async fn gettraffic() {
+    let interface = monitor_network::network_handler::new();
+    interface.get_packets();
+    println!("run");
+}
+
 #[get("/")]
 async fn index() -> Option<NamedFile> {
     NamedFile::open("static/pages/index.html").await.ok()
@@ -52,15 +59,16 @@ fn async packet_function() -> Result<(), Debug<task::JoinError>>{
     Ok(result)
 }
 }
-*/
+ */
 
 //Use launch rather than main for async functionality
 #[launch]
 fn rocket() -> _ {
-    monitor_network::capture_packets();
+    //monitor_network::capture_packets();
    
     rocket::build()
 	.mount("/", routes![index])
+	.mount("/", routes![gettraffic])
 	.mount("/", routes![dataset])
 	.mount("/", routes![train])
 	.mount("/", routes![modelinfo])

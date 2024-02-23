@@ -27,6 +27,7 @@
     <form action="/gettraffic" method="post">
       <input type="submit" value="submit"/>
     </form>
+    <button>Test</button>
     <script src="/bootstrap/js/bootstrap.bundle.min.js"></script>
     <script src="/js/react-0.14.3/build/react.min.js"></script>
     <script src="/js/react-0.14.3/build/react-dom.min.js"></script>
