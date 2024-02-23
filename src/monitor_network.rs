@@ -1,12 +1,12 @@
 use pcap::{Device, Capture};
 use etherparse::{SlicedPacket};
 
-fn capture_packets() {
+pub fn capture_packets() {
     let main_device = Device::lookup().unwrap().unwrap();
     let mut cap = Capture::from_device(main_device).unwrap()
 	.promisc(true)
-        .snaplen(5000)
-        .immediate_mode(true)
+	.snaplen(5000)
+	.immediate_mode(true)
 	.open().unwrap();
     while let Ok(packet) = cap.next_packet() {
 	let frame = packet.data.to_vec();
@@ -26,5 +26,4 @@ fn process_packet(frame :Vec<u8>) {
 	    //println!("transport: {:?}", value.transport);
 	}
     }
-
 }

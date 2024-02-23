@@ -1,11 +1,11 @@
 #[macro_use] extern crate rocket;
 #[cfg(test)] mod tests;
 
-use rocket::fs::{FileServer, relative};
+use rocket::fs::{FileServer, NamedFile, relative};
+use rocket::tokio::task::spawn_blocking;
+use rocket::response::Debug;
 
-use rocket::fs::NamedFile;
-
-mod packet_capture;
+mod monitor_network;
 
 //Sets up static file paths
 mod manual {
@@ -23,13 +23,6 @@ mod manual {
     }
 }
 
-
-/*#[catch(404)]
-fn not_found(req: &Request) -> String {
-    format!("Oh no! We couldn't find the requested path '{}'", req.uri())
-}*/
-
-
 #[get("/")]
 async fn index() -> Option<NamedFile> {
     NamedFile::open("static/pages/index.html").await.ok()
@@ -45,19 +38,33 @@ async fn train() -> Option<NamedFile> {
     NamedFile::open("static/pages/train.html").await.ok()
 }
 
-#[get("/model-info")]
-async fn model_info() -> Option<NamedFile> {
+#[get("/modelinfo")]
+async fn modelinfo() -> Option<NamedFile> {
     NamedFile::open("static/pages/model.html").await.ok()
 }
+
+/*
+fn async packet_function() -> Result<(), Debug<task::JoinError>>{
+    let result = task::spawn_blocking(move || {
+	capture_packets();
+    }).await?;
+
+    Ok(result)
+}
+}
+*/
 
 //Use launch rather than main for async functionality
 #[launch]
 fn rocket() -> _ {
+    monitor_network::capture_packets();
+   
     rocket::build()
 	.mount("/", routes![index])
 	.mount("/", routes![dataset])
 	.mount("/", routes![train])
-	.mount("/", routes![model-info])
+	.mount("/", routes![modelinfo])
         .mount("/", routes![manual::file_path])
-        //.mount("/", FileServer::from(relative!("static")))
+	.mount("/", FileServer::from(relative!("static")))
+
 }
