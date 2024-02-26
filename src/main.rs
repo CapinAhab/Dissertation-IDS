@@ -2,8 +2,9 @@
 #[cfg(test)] mod tests;
 
 use rocket::fs::{FileServer, NamedFile, relative};
-use rocket::tokio::task::spawn_blocking;
-use rocket::response::Debug;
+//use rocket::tokio::task::spawn_blocking;
+//use rocket::response::Debug;
+use rocket::serde::json::Json;
 
 mod monitor_network;
 
@@ -24,10 +25,17 @@ mod manual {
 }
 
 #[post("/gettraffic")]
-async fn gettraffic() {
-    let interface = monitor_network::network_handler::new();
-    interface.get_packets();
-    println!("run");
+async fn gettraffic() -> Json<monitor_network::FrontEndPacketData>{
+    let interface = monitor_network::NetworkHandler::new();
+    //Use while let Ok() = interface.get_packets()
+    match interface.get_one_packet_front_end(){
+	Err(value) => {
+	    return Json(monitor_network::create_error_packet(value.to_string()))
+	}
+	Ok(value) => {
+	    return Json(value)
+	}
+    }
 }
 
 #[get("/")]

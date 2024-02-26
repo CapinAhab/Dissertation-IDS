@@ -1,9 +1,11 @@
 use pcap::{Device, Capture};
-use etherparse::{SlicedPacket};
+use etherparse::SlicedPacket;
+use etherparse::err::packet::SliceError;
 use libc;
+use rocket::serde::Serialize;
 
 //Struct to hold packet data, makes it easy to turn to jasona nd send to user
-struct packet_data{
+pub struct PacketData{
     //Using the time in the format provided by pcap
     ts: libc::timeval,
     caplen: u32,
@@ -14,16 +16,25 @@ struct packet_data{
     transport: i64
 }
 
+//struct reprsenting packet data
+//inherits function that make it easy to convert to json
+#[derive(Serialize)]
+#[serde(crate = "rocket::serde")]
+pub struct FrontEndPacketData{
+    source: [u8; 6],
+    destination: [u8; 6],
+    protocole: String
+}
 
-pub struct network_handler{
+pub struct NetworkHandler{
     cap: Capture<pcap::Active>,
 }
 
 
-impl network_handler{
+impl NetworkHandler{
     pub fn new() -> Self{
 	let main_device = Device::lookup().unwrap().unwrap();
-	network_handler{
+	NetworkHandler{
 	    cap: Capture::from_device(main_device).unwrap()
 		.promisc(true)
 		.snaplen(5000)
@@ -31,25 +42,70 @@ impl network_handler{
 		.open().unwrap()
 	}
     }
-
-
-    pub fn get_packets(mut self){
+    /*
+    pub fn get_packets(mut self) -> String{
 	while let Ok(packet) = self.cap.next_packet(){
 	    let frame = packet.data.to_vec();
-	    Self::process_packet(frame)
+	    let yee = Self::process_packet(frame);
+	    return yee
+	}
+}
+
+    pub fn get_one_packet(mut self) -> String{
+	let packet = self.cap.next_packet();
+	println!("{:?}", packet);
+	let frame = packet.unwrap().to_vec();
+	//let yee = Self::process_packet(frame);
+	//return yee
+	return Self::process_packet(frame)
+    }
+     */
+
+    //Gets packets and returns simplified struct to front end
+    pub fn get_one_packet_front_end(mut self) -> Result<FrontEndPacketData, SliceError>{
+	let packet = self.cap.next_packet();
+	println!("{:?}", packet);
+	let frame = packet.unwrap().to_vec();
+	match Self::process_packet(frame){
+	    Err(value) => {
+		return Err(value)
+	    }
+	    Ok(value) => {
+		return Ok(value)
+	    }
 	}
     }
 
-    fn process_packet(frame :Vec<u8>) { 
+    //Converts packet into a struct
+    fn process_packet(frame :Vec<u8>) -> Result<FrontEndPacketData, SliceError>{ 
 	match SlicedPacket::from_ethernet(&frame) {
-	    Err(value) => println!("Err {:?}", value),
+	    Err(value) => {
+		return Err(value)
+	    },
 	    Ok(value) => {
-		println!("link: {:?}", value.link);
-		println!("vlan: {:?}", value.vlan);
-		println!("net: {:?}", value.net); // contains ip
-		println!("transport: {:?}", value.transport);
+		//println!("link: {:?}", value.link.clone().unwrap().to_header().unwrap().source);
+		//println!("vlan: {:?}", value.vlan);
+		//println!("net: {:?}", value.net); 
+		//println!("transport: {:?}", value.transport);
+		let packet = FrontEndPacketData{
+		    source: value.link.clone().unwrap().to_header().unwrap().source,
+		    destination: value.link.unwrap().to_header().unwrap().destination,
+		    protocole: String::from("TCP")
+		};
+		return Ok(packet)
 	    }
 	}
     }
 }
 
+
+//Creates packet with error message, kind of a work around
+//Handled hear due to encapsulation on packet struck
+pub fn create_error_packet(error_string: String) -> FrontEndPacketData{
+	let error_packet = FrontEndPacketData{
+	    source: [0,0,0,0,0,0],
+	    destination: [0,0,0,0,0,0],
+	    protocole: error_string
+	};
+    return error_packet
+}
