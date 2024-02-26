@@ -23,7 +23,8 @@ pub struct PacketData{
 pub struct FrontEndPacketData{
     source: [u8; 6],
     destination: [u8; 6],
-    protocole: String
+    protocole: u16,
+    error_message: String
 }
 
 pub struct NetworkHandler{
@@ -64,7 +65,6 @@ impl NetworkHandler{
     //Gets packets and returns simplified struct to front end
     pub fn get_one_packet_front_end(mut self) -> Result<FrontEndPacketData, SliceError>{
 	let packet = self.cap.next_packet();
-	println!("{:?}", packet);
 	let frame = packet.unwrap().to_vec();
 	match Self::process_packet(frame){
 	    Err(value) => {
@@ -83,14 +83,14 @@ impl NetworkHandler{
 		return Err(value)
 	    },
 	    Ok(value) => {
-		//println!("link: {:?}", value.link.clone().unwrap().to_header().unwrap().source);
-		//println!("vlan: {:?}", value.vlan);
+		println!("link: {:?}", value.link);
 		//println!("net: {:?}", value.net); 
 		//println!("transport: {:?}", value.transport);
 		let packet = FrontEndPacketData{
 		    source: value.link.clone().unwrap().to_header().unwrap().source,
-		    destination: value.link.unwrap().to_header().unwrap().destination,
-		    protocole: String::from("TCP")
+		    destination: value.link.clone().unwrap().to_header().unwrap().destination,
+		    protocole: value.link.unwrap().to_header().unwrap().ether_type.0,
+		    error_message: String::from("")
 		};
 		return Ok(packet)
 	    }
@@ -105,7 +105,8 @@ pub fn create_error_packet(error_string: String) -> FrontEndPacketData{
 	let error_packet = FrontEndPacketData{
 	    source: [0,0,0,0,0,0],
 	    destination: [0,0,0,0,0,0],
-	    protocole: error_string
+	    protocole: 0,
+	    error_message: error_string
 	};
     return error_packet
 }
