@@ -43,24 +43,21 @@ impl NetworkHandler{
 		.open().unwrap()
 	}
     }
-    /*
-    pub fn get_packets(mut self) -> String{
+    
+    pub fn get_packets(mut self) -> Result<FrontEndPacketData, SliceError>{
 	while let Ok(packet) = self.cap.next_packet(){
 	    let frame = packet.data.to_vec();
-	    let yee = Self::process_packet(frame);
-	    return yee
+	    match Self::process_packet(frame){
+		Err(value) => {
+		    return Err(value)
+		}
+		Ok(value) => {
+		    return Ok(value)
+		}
+	    }
 	}
-}
-
-    pub fn get_one_packet(mut self) -> String{
-	let packet = self.cap.next_packet();
-	println!("{:?}", packet);
-	let frame = packet.unwrap().to_vec();
-	//let yee = Self::process_packet(frame);
-	//return yee
-	return Self::process_packet(frame)
+	return Ok(create_error_packet(String::from("No packets :(")))
     }
-     */
 
     //Gets packets and returns simplified struct to front end
     pub fn get_one_packet_front_end(mut self) -> Result<FrontEndPacketData, SliceError>{
