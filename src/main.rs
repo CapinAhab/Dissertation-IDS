@@ -29,14 +29,24 @@ mod manual {
     }
 }
 
+//Returns packet json file 
 #[get("/hello")]
 fn hello(ws: WebSocket) -> rocket_ws::Channel<'static> {
-    println!("fuck");
     ws.channel(move |mut stream| {
         Box::pin(async move {
             let interval = Duration::from_secs(1);
             loop {
-                let message = Message::Text("Hello".to_string());
+		let interface = monitor_network::NetworkHandler::new();
+		let mut message;
+		match interface.get_one_packet_front_end(){
+		    Err(value) => {
+			message = Message::Text(value.to_string());
+		    }
+		    Ok(value) => {
+			message = Message::Text(serde_json::to_string(&value).expect("fuck"));
+		    }
+		}
+                
                 if let Err(err) = stream.send(message).await {
                     eprintln!("Error sending message: {}", err);
                     break; // Exit the loop if there's an error
@@ -48,23 +58,6 @@ fn hello(ws: WebSocket) -> rocket_ws::Channel<'static> {
     })
 }
 
-#[post("/streamtest")]
-async fn streamtest() -> Json<monitor_network::FrontEndPacketData>{
-    let interface = monitor_network::NetworkHandler::new();
-    //Use while let Ok() = interface.get_packets()
-    println!("stream");
-    while true{
-	match interface.get_packets(){
-	    Err(value) => {
-		return Json(monitor_network::create_error_packet(value.to_string()))
-	    }
-	    Ok(value) => {
-		return Json(value)
-	    }
-	}
-    }
-    return Json(monitor_network::create_error_packet(String::from("ahh")))
-}
 
 #[get("/gettraffic")]
 async fn gettraffic() -> Json<monitor_network::FrontEndPacketData>{
@@ -112,7 +105,6 @@ fn rocket() -> _ {
 	.mount("/", routes![dataset])
 	.mount("/", routes![train])
 	.mount("/", routes![hello])
-	.mount("/", routes![streamtest])
 	.mount("/", routes![modelinfo])
         .mount("/", routes![manual::file_path])
 	.mount("/", FileServer::from(relative!("static")))

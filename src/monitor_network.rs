@@ -2,7 +2,7 @@ use pcap::{Device, Capture};
 use etherparse::SlicedPacket;
 use etherparse::err::packet::SliceError;
 use libc;
-use rocket::serde::Serialize;
+use serde::{Serialize, Deserialize};
 
 //Struct to hold packet data, makes it easy to turn to jasona nd send to user
 pub struct PacketData{
@@ -18,8 +18,10 @@ pub struct PacketData{
 
 //struct reprsenting packet data
 //inherits function that make it easy to convert to json
-#[derive(Serialize)]
-#[serde(crate = "rocket::serde")]
+#[derive(Debug)]
+//#[derive(Serialize)]
+#[serde(crate = "serde")]
+#[derive(Serialize, Deserialize)]
 pub struct FrontEndPacketData{
     source: [u8; 6],
     destination: [u8; 6],
