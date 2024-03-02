@@ -16,11 +16,9 @@ pub struct PacketData{
     transport: i64
 }
 
-//struct reprsenting packet data
+//struct reprsenting packet data, simplified for the front end
 //inherits function that make it easy to convert to json
 #[derive(Debug)]
-//#[derive(Serialize)]
-#[serde(crate = "serde")]
 #[derive(Serialize, Deserialize)]
 pub struct FrontEndPacketData{
     source: [u8; 6],
@@ -29,23 +27,27 @@ pub struct FrontEndPacketData{
     error_message: String
 }
 
+//Object that handles listening on the network
 pub struct NetworkHandler{
     cap: Capture<pcap::Active>,
 }
 
-
 impl NetworkHandler{
+    //Constructor sets up background listener
     pub fn new() -> Self{
 	let main_device = Device::lookup().unwrap().unwrap();
 	NetworkHandler{
 	    cap: Capture::from_device(main_device).unwrap()
-		.promisc(true)
+		.promisc(true) //Needs to be in promiscuous mode to get all network traffic
 		.snaplen(5000)
 		.immediate_mode(true)
 		.open().unwrap()
 	}
     }
-    
+
+    //Continuously gets packets
+    //Code is for reference, using get_one_packet instead
+    /*
     pub fn get_packets(mut self) -> Result<FrontEndPacketData, SliceError>{
 	while let Ok(packet) = self.cap.next_packet(){
 	    let frame = packet.data.to_vec();
@@ -60,6 +62,7 @@ impl NetworkHandler{
 	}
 	return Ok(create_error_packet(String::from("No packets :(")))
     }
+     */
 
     //Gets packets and returns simplified struct to front end
     pub fn get_one_packet_front_end(mut self) -> Result<FrontEndPacketData, SliceError>{
@@ -75,16 +78,13 @@ impl NetworkHandler{
 	}
     }
 
-    //Converts packet into a struct
+    //Converts packet into a struct for user front end
     fn process_packet(frame :Vec<u8>) -> Result<FrontEndPacketData, SliceError>{ 
 	match SlicedPacket::from_ethernet(&frame) {
 	    Err(value) => {
 		return Err(value)
 	    },
 	    Ok(value) => {
-		println!("link: {:?}", value.link);
-		//println!("net: {:?}", value.net); 
-		//println!("transport: {:?}", value.transport);
 		let packet = FrontEndPacketData{
 		    source: value.link.clone().unwrap().to_header().unwrap().source,
 		    destination: value.link.clone().unwrap().to_header().unwrap().destination,

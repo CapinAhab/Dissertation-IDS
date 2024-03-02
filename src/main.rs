@@ -2,14 +2,10 @@
 #[cfg(test)] mod tests;
 
 use rocket::fs::{FileServer, NamedFile, relative};
-//use rocket::tokio::task::spawn_blocking;
-//use rocket::response::Debug;
-use rocket::serde::json::Json;
-use rocket_ws::{WebSocket, Stream};
+use rocket_ws::WebSocket;
 use rocket::tokio::time::{sleep, Duration};
 use crate::rocket::futures::SinkExt;
 use rocket_ws::Message;
-use tokio::time::interval;
 
 mod monitor_network;
 
@@ -29,65 +25,56 @@ mod manual {
     }
 }
 
-//Returns packet json file 
-#[get("/hello")]
-fn hello(ws: WebSocket) -> rocket_ws::Channel<'static> {
+//Returns packet json as string
+//websocket spec can only handle bytes and strings
+#[get("/gettraffic")]
+fn gettraffic(ws: WebSocket) -> rocket_ws::Channel<'static> {
     ws.channel(move |mut stream| {
         Box::pin(async move {
-            let interval = Duration::from_secs(1);
             loop {
 		let interface = monitor_network::NetworkHandler::new();
 		let mut message;
+		//Might return error, sends the error as a string or successful json as a string
 		match interface.get_one_packet_front_end(){
 		    Err(value) => {
 			message = Message::Text(value.to_string());
 		    }
 		    Ok(value) => {
-			message = Message::Text(serde_json::to_string(&value).expect("fuck"));
+			message = Message::Text(serde_json::to_string(&value).expect("Failed to convert json"));
 		    }
 		}
                 
                 if let Err(err) = stream.send(message).await {
                     eprintln!("Error sending message: {}", err);
-                    break; // Exit the loop if there's an error
+                    break; // Exit the loop (end connection) if there's an error
                 }
-                sleep(interval).await; // Wait for the specified interval
+                sleep(Duration::from_millis(1)).await; // Wait for millisecond before getting next packet
             }
             Ok(())
         })
     })
 }
 
-
-#[get("/gettraffic")]
-async fn gettraffic() -> Json<monitor_network::FrontEndPacketData>{
-    let interface = monitor_network::NetworkHandler::new();
-    //Use while let Ok() = interface.get_packets()
-    match interface.get_one_packet_front_end(){
-	Err(value) => {
-	    return Json(monitor_network::create_error_packet(value.to_string()))
-	}
-	Ok(value) => {
-	    return Json(value)
-	}
-    }
-}
-
+//Dashboard
 #[get("/")]
 async fn index() -> Option<NamedFile> {
     NamedFile::open("static/pages/index.html").await.ok()
 }
 
+//Information on dataset
 #[get("/dataset")]
 async fn dataset() -> Option<NamedFile> {
     NamedFile::open("static/pages/data.html").await.ok()
 }
 
+
+//Options to train and tweak models
 #[get("/train")]
 async fn train() -> Option<NamedFile> {
     NamedFile::open("static/pages/train.html").await.ok()
 }
 
+//Stats on current model
 #[get("/modelinfo")]
 async fn modelinfo() -> Option<NamedFile> {
     NamedFile::open("static/pages/model.html").await.ok()
@@ -104,7 +91,6 @@ fn rocket() -> _ {
 	.mount("/", routes![gettraffic])
 	.mount("/", routes![dataset])
 	.mount("/", routes![train])
-	.mount("/", routes![hello])
 	.mount("/", routes![modelinfo])
         .mount("/", routes![manual::file_path])
 	.mount("/", FileServer::from(relative!("static")))
