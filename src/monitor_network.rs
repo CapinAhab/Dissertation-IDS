@@ -23,8 +23,7 @@ pub struct PacketData{
 pub struct FrontEndPacketData{
     source: [u8; 6],
     destination: [u8; 6],
-    protocole: u16,
-    error_message: String
+    protocole: u16
 }
 
 //Object that handles listening on the network
@@ -89,7 +88,6 @@ impl NetworkHandler{
 		    source: value.link.clone().unwrap().to_header().unwrap().source,
 		    destination: value.link.clone().unwrap().to_header().unwrap().destination,
 		    protocole: value.link.unwrap().to_header().unwrap().ether_type.0,
-		    error_message: String::from("")
 		};
 		return Ok(packet)
 	    }
@@ -98,14 +96,3 @@ impl NetworkHandler{
 }
 
 
-//Creates packet with error message, kind of a work around
-//Handled hear due to encapsulation on packet struck
-pub fn create_error_packet(error_string: String) -> FrontEndPacketData{
-	let error_packet = FrontEndPacketData{
-	    source: [0,0,0,0,0,0],
-	    destination: [0,0,0,0,0,0],
-	    protocole: 0,
-	    error_message: error_string
-	};
-    return error_packet
-}

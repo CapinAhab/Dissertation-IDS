@@ -8,6 +8,7 @@ use crate::rocket::futures::SinkExt;
 use rocket_ws::Message;
 
 mod monitor_network;
+mod deep_learn;
 
 //Sets up static file paths
 mod manual {
@@ -33,7 +34,7 @@ fn gettraffic(ws: WebSocket) -> rocket_ws::Channel<'static> {
         Box::pin(async move {
             loop {
 		let interface = monitor_network::NetworkHandler::new();
-		let mut message;
+		let message;
 		//Might return error, sends the error as a string or successful json as a string
 		match interface.get_one_packet_front_end(){
 		    Err(value) => {
@@ -84,8 +85,7 @@ async fn modelinfo() -> Option<NamedFile> {
 //Use launch rather than main for async functionality
 #[launch]
 fn rocket() -> _ {
-    //monitor_network::capture_packets();
-   
+    deep_learn::test_net();
     rocket::build()
 	.mount("/", routes![index])
 	.mount("/", routes![gettraffic])
