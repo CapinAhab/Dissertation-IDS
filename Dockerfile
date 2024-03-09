@@ -1,5 +1,5 @@
 # Use the official Rust image as builder
-FROM rust:latest as builder
+FROM rust:1.76-buster as builder
 
 # Need wget to download libtorch 2.2.0
 RUN apt-get update && apt-get install -y wget unzip libpcap-dev
@@ -24,10 +24,13 @@ RUN wget https://download.pytorch.org/libtorch/cpu/libtorch-cxx11-abi-shared-wit
 RUN cargo build --release
 
 # Need debian as a base image to execute the built program
-FROM debian:buster-slim
+FROM debian:buster
+
+RUN apt-get update && apt-get install -y libpcap-dev libc6
 
 WORKDIR /usr/src/ids
 
+COPY --from=builder /usr/src/ids/ /usr/src/ids 
 COPY --from=builder /usr/src/ids/target/release/ids .
 
 EXPOSE 8000
