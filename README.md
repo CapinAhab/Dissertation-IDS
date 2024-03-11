@@ -24,5 +24,5 @@ Due to the complex build process, a docker file has been provided to give a cons
 sudo systemctl start docker
 cd path_to_project
 sudo docker build -t ids .
-sudo docker run ids
+sudo docker run --network host ids
 ```
