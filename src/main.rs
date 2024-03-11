@@ -6,9 +6,17 @@ use rocket_ws::WebSocket;
 use rocket::tokio::time::{sleep, Duration};
 use crate::rocket::futures::SinkExt;
 use rocket_ws::Message;
+use rocket::form::Form;
 
 mod monitor_network;
 mod deep_learn;
+
+#[derive(Debug, FromForm)]
+struct ModelPerameters{
+    layers: i64,
+    neurons: i64
+}
+
 
 //Sets up static file paths
 mod manual {
@@ -81,6 +89,10 @@ async fn modelinfo() -> Option<NamedFile> {
     NamedFile::open("static/pages/model.html").await.ok()
 }
 
+#[post("/genmodel", data = "<model_data>")]
+async fn genmodel(model_data: Form<ModelPerameters>){
+    println!("{:?}", model_data);
+}
 
 //Use launch rather than main for async functionality
 #[launch]
@@ -91,6 +103,7 @@ fn rocket() -> _ {
 	.mount("/", routes![gettraffic])
 	.mount("/", routes![dataset])
 	.mount("/", routes![train])
+	.mount("/", routes![genmodel])
 	.mount("/", routes![modelinfo])
         .mount("/", routes![manual::file_path])
 	.mount("/", FileServer::from(relative!("static")))
