@@ -20,8 +20,8 @@ pub fn gen_net(layers: i64, neurons: i64, lstm_model: bool){
     //number of input neurons
     let input_features = 35;
 
-    //Get cpu for machine learning
-    let vs = nn::VarStore::new(Device::Cpu);
+    //Gets hardware acceleration if possible, otherwise uses CPU
+    let vs = nn::VarStore::new(Device::cuda_if_available());
 
     //Sequential network
 
