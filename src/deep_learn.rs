@@ -2,20 +2,20 @@
 extern crate tch;
 use tch::{nn, nn::Module, nn::OptimizerConfig, Device, Tensor};
 
-/*
-pub struct LSTMnetwork {
-    lstm: nn::LSTM,
-    linear: nn::Linear,
+
+//Single layer LSTM may be effective, hinted at in lit
+pub fn single_layer_lstm(){
+    //number of input neurons
+    let input_features = 35;
+
+    //Gets hardware acceleration if possible, otherwise uses CPU
+    let vs = nn::VarStore::new(Device::cuda_if_available());
+
+    //LSTM network
+    let input_layer = nn::lstm(vs.root(), 35, 10, Default::default());
 }
 
 
-impl nn::Module for LSTMnetwork{
-    fn forward(&self, xs: &Tensor) -> Tensor {
-        let output = xs.view([-1, 28]).apply(&self.lstm).view([-1, 128]);
-        output.apply(&self.linear)
-    }
-}
-*/
 pub fn gen_net(layers: i64, neurons: i64, lstm_model: bool){
     //number of input neurons
     let input_features = 35;
@@ -27,6 +27,7 @@ pub fn gen_net(layers: i64, neurons: i64, lstm_model: bool){
 
     if lstm_model{
 	println!("Not implemented yet");
+
     }
     else{
 	//need a fixed number of input neurons to correspond to features

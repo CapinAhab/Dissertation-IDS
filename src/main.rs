@@ -11,6 +11,8 @@ use rocket::form::Form;
 mod monitor_network;
 mod deep_learn;
 
+
+//Form input for model parameters
 #[derive(Debug, FromForm)]
 struct ModelPerameters{
     lstm_model: bool,
