@@ -13,6 +13,7 @@ mod deep_learn;
 
 #[derive(Debug, FromForm)]
 struct ModelPerameters{
+    lstm_model: bool,
     layers: i64,
     neurons: i64
 }
@@ -37,7 +38,7 @@ mod manual {
 //Returns packet json as string
 //websocket spec can only handle bytes and strings
 #[get("/gettraffic")]
-fn gettraffic(ws: WebSocket) -> rocket_ws::Channel<'static> {
+async fn gettraffic(ws: WebSocket) -> rocket_ws::Channel<'static> {
     ws.channel(move |mut stream| {
         Box::pin(async move {
             loop {
@@ -91,13 +92,12 @@ async fn modelinfo() -> Option<NamedFile> {
 
 #[post("/genmodel", data = "<model_data>")]
 async fn genmodel(model_data: Form<ModelPerameters>){
-    println!("{:?}", model_data);
+    deep_learn::gen_net(model_data.layers, model_data.neurons, model_data.lstm_model);
 }
 
 //Use launch rather than main for async functionality
 #[launch]
 fn rocket() -> _ {
-    deep_learn::test_net();
     rocket::build()
 	.mount("/", routes![index])
 	.mount("/", routes![gettraffic])
