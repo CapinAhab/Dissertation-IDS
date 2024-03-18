@@ -7,6 +7,7 @@ use rocket::tokio::time::{sleep, Duration};
 use crate::rocket::futures::SinkExt;
 use rocket_ws::Message;
 use rocket::form::Form;
+use std::fs;
 
 mod monitor_network;
 mod deep_learn;
@@ -83,7 +84,13 @@ async fn dataset() -> Option<NamedFile> {
 //Options to train and tweak models
 #[get("/train")]
 async fn train() -> Option<NamedFile> {
-    NamedFile::open("static/pages/train.html").await.ok()
+    //Only show train page if training file installed
+    if fs::metadata("dataset/.gitignore").is_ok() {
+	NamedFile::open("static/pages/train.html").await.ok()
+    }
+    else{
+	NamedFile::open("static/pages/nomodel.html").await.ok()
+    }
 }
 
 //Stats on current model
