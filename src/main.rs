@@ -71,13 +71,13 @@ async fn gettraffic(ws: WebSocket) -> rocket_ws::Channel<'static> {
 //Dashboard
 #[get("/")]
 async fn index() -> Option<NamedFile> {
-    NamedFile::open("static/pages/index.html").await.ok()
+    NamedFile::open("pages/index.html").await.ok()
 }
 
 //Information on dataset
 #[get("/dataset")]
 async fn dataset() -> Option<NamedFile> {
-    NamedFile::open("static/pages/data.html").await.ok()
+    NamedFile::open("pages/data.html").await.ok()
 }
 
 
@@ -86,17 +86,17 @@ async fn dataset() -> Option<NamedFile> {
 async fn train() -> Option<NamedFile> {
     //Only show train page if training file installed
     if fs::metadata("dataset/.gitignore").is_ok() {
-	NamedFile::open("static/pages/train.html").await.ok()
+	NamedFile::open("pages/train.html").await.ok()
     }
     else{
-	NamedFile::open("static/pages/nomodel.html").await.ok()
+	NamedFile::open("pages/nomodel.html").await.ok()
     }
 }
 
 //Stats on current model
 #[get("/modelinfo")]
 async fn modelinfo() -> Option<NamedFile> {
-    NamedFile::open("static/pages/model.html").await.ok()
+    NamedFile::open("pages/model.html").await.ok()
 }
 
 #[post("/genmodel", data = "<model_data>")]
