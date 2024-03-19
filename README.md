@@ -1,4 +1,24 @@
+## Dataset and custom models
 
+The default model was trained with this dataset [https://www.unb.ca/cic/datasets/ids-2018.html](https://www.unb.ca/cic/datasets/ids-2018.html), it contains several attacks but the default this project is uses is focused on DOS attacks from the Slowloris tool. 
+
+Users can create and train custom models but the dataset must be installed in the dataset directory for the feature to be enabled.
+
+### Setup
+To enable the feature you must download the dataset from its AWS bucket and place it in the dataset directory. bellow is an example of how to do this on debian.
+
+```bash
+sudo apt-get install awscli
+aws s3 cp --no-sign-request --region <your-region> s3://cse-cic-ids2018/Original Network Traffic and Log data/Thursday-15-02-2018/pcap.zip .
+unzip pcap.zip
+mv pcap /path_to_project/dataset/
+```
+
+This can be done automatically through docker, the file Dockerfile-dataset. The command to use this Docker file isntead of the dfault is listed bellow, be aware this will take some time as the dataset is over 30GB big.
+
+```bash
+sudo docker build -t ids -f Dockerfile-dataset .
+```
 
 ## Building
 
