@@ -66,4 +66,5 @@ flycheck_*.el
 
 set-env.sh
 
-/libtorch
+libtorch
+dataset/pcap
