@@ -23,6 +23,22 @@
 	    </div>
 	</div>
     </nav>
-    <h1>Model Missing</h1>
+    <h1 style="text-align: center;">Training Data Missing</h1>
+    <br>
+    <p>To create your own models please use the Dockerfile-dataset to download and run the project with the dataset included.</p>
+    <pre>
+	<code class="language-bash">
+	sudo docker build -t ids -f Dockerfile-dataset .
+	</code>
+    </pre>
+    <p>If your building from source please download the dataset and place it in the dataset directory.</p>
+    <pre>
+	<code class="language-bash">
+	sudo apt-get install awscli
+	aws s3 cp --no-sign-request --region <your-region> s3://cse-cic-ids2018/Original Network Traffic and Log data/Thursday-15-02-2018/pcap.zip .
+	unzip pcap.zip
+	mv pcap /path_to_project/dataset/
+	</code>
+    </pre>
   </body>
 </html>

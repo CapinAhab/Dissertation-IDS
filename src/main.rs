@@ -8,6 +8,7 @@ use crate::rocket::futures::SinkExt;
 use rocket_ws::Message;
 use rocket::form::Form;
 use std::fs;
+use std::path::Path;
 
 mod monitor_network;
 mod deep_learn;
@@ -85,7 +86,7 @@ async fn dataset() -> Option<NamedFile> {
 #[get("/train")]
 async fn train() -> Option<NamedFile> {
     //Only show train page if training file installed
-    if fs::metadata("dataset/.gitignore").is_ok() {
+    if Path::new("dataset/pcap").exists() {
 	NamedFile::open("pages/train.html").await.ok()
     }
     else{
