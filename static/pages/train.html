@@ -23,5 +23,16 @@
 	    </div>
 	</div>
     </nav>
+    <form action="/genmodel" method="post">
+	<label for="lstm_model">Use LSTM model:</label>
+	<input type="checkbox" name="lstm_model" value="false">
+	<label for="layers">Number of layers:</label>
+	<input type="number" id="layers" name="layers" required><br><br>
+
+	<label for="neurons">Number of neurons:</label>
+	<input type="number" id="neurons" name="neurons" required><br><br>
+
+	<input type="submit" value="Submit">
+    </form>
   </body>
 </html>

@@ -6,8 +6,21 @@ use rocket_ws::WebSocket;
 use rocket::tokio::time::{sleep, Duration};
 use crate::rocket::futures::SinkExt;
 use rocket_ws::Message;
+use rocket::form::Form;
+use std::fs;
 
 mod monitor_network;
+mod deep_learn;
+
+
+//Form input for model parameters
+#[derive(Debug, FromForm)]
+struct ModelPerameters{
+    lstm_model: bool,
+    layers: i64,
+    neurons: i64
+}
+
 
 //Sets up static file paths
 mod manual {
@@ -28,12 +41,12 @@ mod manual {
 //Returns packet json as string
 //websocket spec can only handle bytes and strings
 #[get("/gettraffic")]
-fn gettraffic(ws: WebSocket) -> rocket_ws::Channel<'static> {
+async fn gettraffic(ws: WebSocket) -> rocket_ws::Channel<'static> {
     ws.channel(move |mut stream| {
         Box::pin(async move {
             loop {
 		let interface = monitor_network::NetworkHandler::new();
-		let mut message;
+		let message;
 		//Might return error, sends the error as a string or successful json as a string
 		match interface.get_one_packet_front_end(){
 		    Err(value) => {
@@ -71,7 +84,13 @@ async fn dataset() -> Option<NamedFile> {
 //Options to train and tweak models
 #[get("/train")]
 async fn train() -> Option<NamedFile> {
-    NamedFile::open("static/pages/train.html").await.ok()
+    //Only show train page if training file installed
+    if fs::metadata("dataset/.gitignore").is_ok() {
+	NamedFile::open("static/pages/train.html").await.ok()
+    }
+    else{
+	NamedFile::open("static/pages/nomodel.html").await.ok()
+    }
 }
 
 //Stats on current model
@@ -80,17 +99,20 @@ async fn modelinfo() -> Option<NamedFile> {
     NamedFile::open("static/pages/model.html").await.ok()
 }
 
+#[post("/genmodel", data = "<model_data>")]
+async fn genmodel(model_data: Form<ModelPerameters>){
+    deep_learn::gen_net(model_data.layers, model_data.neurons, model_data.lstm_model);
+}
 
 //Use launch rather than main for async functionality
 #[launch]
 fn rocket() -> _ {
-    //monitor_network::capture_packets();
-   
     rocket::build()
 	.mount("/", routes![index])
 	.mount("/", routes![gettraffic])
 	.mount("/", routes![dataset])
 	.mount("/", routes![train])
+	.mount("/", routes![genmodel])
 	.mount("/", routes![modelinfo])
         .mount("/", routes![manual::file_path])
 	.mount("/", FileServer::from(relative!("static")))
