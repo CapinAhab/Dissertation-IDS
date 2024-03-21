@@ -72,7 +72,12 @@ async fn gettraffic(ws: WebSocket) -> rocket_ws::Channel<'static> {
 //Dashboard
 #[get("/")]
 async fn index() -> Option<NamedFile> {
-    NamedFile::open("pages/index.html").await.ok()
+    if monitor_network::test_network_permission() {
+	NamedFile::open("pages/index.html").await.ok()
+    }
+    else{
+	NamedFile::open("pages/nopermissions.html").await.ok()
+    }
 }
 
 //Information on dataset
@@ -100,6 +105,12 @@ async fn modelinfo() -> Option<NamedFile> {
     NamedFile::open("pages/model.html").await.ok()
 }
 
+#[get("/test")]
+async fn test_page() -> Option<NamedFile> {
+    NamedFile::open("pages/test.html").await.ok()
+}
+
+
 #[post("/genmodel", data = "<model_data>")]
 async fn genmodel(model_data: Form<ModelPerameters>){
     deep_learn::gen_net(model_data.layers, model_data.neurons, model_data.lstm_model);
@@ -113,6 +124,7 @@ fn rocket() -> _ {
 	.mount("/", routes![gettraffic])
 	.mount("/", routes![dataset])
 	.mount("/", routes![train])
+	.mount("/", routes![test_page])
 	.mount("/", routes![genmodel])
 	.mount("/", routes![modelinfo])
         .mount("/", routes![manual::file_path])
