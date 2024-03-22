@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8"/>
+    <title>Train model</title>
+    <link rel="stylesheet" href="/bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" href="/css/generic.css">
+    <link rel="stylesheet" href="/fonts/fontawesome-free-6.5.1-web/css/all.min.css">
+  </head>
+  <body data-bs-theme="dark">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+	<div class="container-fluid">
+	    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavAltMarkup" aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation">
+		<span class="navbar-toggler-icon"></span>
+	    </button>
+	    <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
+		<div class="navbar-nav">
+		    <a class="nav-link" aria-current="page" href="#"><i class="fa-solid fa-computer" style="color: #ffffff;"></i> Monitor</a>
+		    <a class="nav-link" href="#"><i class="fa-solid fa-book" style="color: #ffffff;"></i> Dataset</a>
+		    <a class="nav-link active" href="#"><i class="fa-solid fa-brain" style="color: #ffffff;"></i> Train</a>
+		    <a class="nav-link" href="#"><i class="fa-solid fa-robot" style="color: #ffffff;"></i> Model details</a>
+		</div>
+	    </div>
+	</div>
+    </nav>
+    <h1 style="text-align: center;">Training Data Missing</h1>
+    <br>
+    <p>To create your own models please use the Dockerfile-dataset to download and run the project with the dataset included.</p>
+    <pre>
+	<code class="language-bash">
+	sudo docker build -t ids -f Dockerfile-dataset .
+	</code>
+    </pre>
+    <p>If your building from source please download the dataset and place it in the dataset directory.</p>
+    <pre>
+	<code class="language-bash">
+	sudo apt-get install awscli
+	aws s3 cp --no-sign-request --region <your-region> s3://cse-cic-ids2018/Original Network Traffic and Log data/Thursday-15-02-2018/pcap.zip .
+	unzip pcap.zip
+	mv pcap /path_to_project/dataset/
+	</code>
+    </pre>
+  </body>
+</html>

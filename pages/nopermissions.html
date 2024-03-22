@@ -23,6 +23,19 @@
 	    </div>
 	</div>
     </nav>
-    <h1>Model Missing</h1>
+    <h1 style="text-align: center;">Missing Network Permissions</h1>
+    <br>
+    <p>To monitor your network the application needs elevated permissions. If your running from docker you need to run the image with the "--network host" command line option.</p>
+    <pre>
+	<code class="language-bash">
+	sudo docker run --network=host ids
+	</code>
+    </pre>
+    <p>If your building from source make sure the user your running the binary as has network permissions or run the program from a root account/sudo</p>
+    <pre>
+	<code class="language-bash">
+	sudo cargo run
+	</code>
+    </pre>
   </body>
 </html>

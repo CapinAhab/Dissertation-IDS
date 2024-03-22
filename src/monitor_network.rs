@@ -43,6 +43,22 @@ pub struct NetworkHandler{
     cap: Capture<pcap::Active>,
 }
 
+
+//Iterates through available network devices and test for permission to access them
+pub fn test_network_permission() -> bool{
+    match Device::lookup() {
+        Ok(device) => {
+            match device.expect("Error").open(){
+		Ok(_) => return true,
+		Err(_e) => return false
+            }
+	}
+	Err(_e) => {
+	    return false
+	}
+    }
+}
+
 impl NetworkHandler{
     //Constructor sets up background listener
     pub fn new() -> Self{

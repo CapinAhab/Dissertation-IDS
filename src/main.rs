@@ -8,6 +8,7 @@ use crate::rocket::futures::SinkExt;
 use rocket_ws::Message;
 use rocket::form::Form;
 use std::fs;
+use std::path::Path;
 
 mod monitor_network;
 mod deep_learn;
@@ -71,13 +72,18 @@ async fn gettraffic(ws: WebSocket) -> rocket_ws::Channel<'static> {
 //Dashboard
 #[get("/")]
 async fn index() -> Option<NamedFile> {
-    NamedFile::open("static/pages/index.html").await.ok()
+    if monitor_network::test_network_permission() {
+	NamedFile::open("pages/index.html").await.ok()
+    }
+    else{
+	NamedFile::open("pages/nopermissions.html").await.ok()
+    }
 }
 
 //Information on dataset
 #[get("/dataset")]
 async fn dataset() -> Option<NamedFile> {
-    NamedFile::open("static/pages/data.html").await.ok()
+    NamedFile::open("pages/data.html").await.ok()
 }
 
 
@@ -85,19 +91,25 @@ async fn dataset() -> Option<NamedFile> {
 #[get("/train")]
 async fn train() -> Option<NamedFile> {
     //Only show train page if training file installed
-    if fs::metadata("dataset/.gitignore").is_ok() {
-	NamedFile::open("static/pages/train.html").await.ok()
+    if Path::new("dataset/pcap").exists() {
+	NamedFile::open("pages/train.html").await.ok()
     }
     else{
-	NamedFile::open("static/pages/nomodel.html").await.ok()
+	NamedFile::open("pages/nomodel.html").await.ok()
     }
 }
 
 //Stats on current model
 #[get("/modelinfo")]
 async fn modelinfo() -> Option<NamedFile> {
-    NamedFile::open("static/pages/model.html").await.ok()
+    NamedFile::open("pages/model.html").await.ok()
 }
+
+#[get("/test")]
+async fn test_page() -> Option<NamedFile> {
+    NamedFile::open("pages/test.html").await.ok()
+}
+
 
 #[post("/genmodel", data = "<model_data>")]
 async fn genmodel(model_data: Form<ModelPerameters>){
@@ -112,6 +124,7 @@ fn rocket() -> _ {
 	.mount("/", routes![gettraffic])
 	.mount("/", routes![dataset])
 	.mount("/", routes![train])
+	.mount("/", routes![test_page])
 	.mount("/", routes![genmodel])
 	.mount("/", routes![modelinfo])
         .mount("/", routes![manual::file_path])
