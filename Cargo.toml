@@ -14,5 +14,5 @@ rocket = "0.5.0"
 rocket_ws = "0.1.0"
 serde = "1.0.197"
 serde_json = "1.0.114"
-tch = "0.15.0"
+tch = {version="0.15.0", features=["download-libtorch"]}
 tokio = {version = "1.36.0", features = ["full"]}
