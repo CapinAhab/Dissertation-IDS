@@ -1,5 +1,5 @@
 # Use the official Rust image as builder
-FROM rust:1.76-buster as builder
+FROM rust:1.76-bookworm as builder
 
 # Need wget to download libtorch 2.2.0
 RUN apt-get update && apt-get install -y wget unzip libpcap-dev awscli
@@ -11,6 +11,8 @@ COPY libglog/* /usr/lib/
 
 # Set LIBTORCH env so compiler uses correct version of libtorch
 ENV LIBTORCH=/usr/src/ids/libtorch
+#Set compiler to use dependencies packaged with libtorch to stop version conflicts
+ENV LD_LIBRARY_PATH=/usr/src/ids/libtorch/lib:$LD_LIBRARY_PATH
 
 COPY . .
 
@@ -27,12 +29,13 @@ RUN aws s3 cp --no-sign-request --region eu-west-2 s3://cse-cic-ids2018/Original
 RUN cargo build --release
 
 # Need debian as a base image to execute the built program
-FROM debian:buster
+FROM debian:bookworm
 
 RUN apt-get update && apt-get install -y libpcap-dev libc6
 
 WORKDIR /usr/src/ids
 
+COPY --from=builder /usr/src/ids/libtorch/lib/* /usr/lib/
 COPY --from=builder /usr/src/ids/ /usr/src/ids 
 COPY --from=builder /usr/src/ids/target/release/ids .
 COPY --from=builder /usr/src/ids/pcap /usr/src/ids/dataset/
