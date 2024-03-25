@@ -21,9 +21,9 @@ RUN wget https://download.pytorch.org/libtorch/cpu/libtorch-cxx11-abi-shared-wit
     && unzip libtorch-cxx11-abi-shared-with-deps-2.2.0+cpu.zip \
     && rm libtorch-cxx11-abi-shared-with-deps-2.2.0+cpu.zip
 
-RUN aws s3 cp --no-sign-request --region eu-west-2 "s3://cse-cic-ids2018/Original Network Traffic and Log data/Thursday-15-02-2018/pcap.zip" . \
-    && unzip pcap.zip \
-    && rm pcap.zip
+RUN aws s3 cp --no-sign-request --region eu-west-2 "s3://cse-cic-ids2018/Original Network Traffic and Log data/Thursday-15-02-2018/pcap.zip" dataset/ \
+    && unzip dataset/pcap.zip -d dataset/ \
+    && rm dataset/pcap.zip
 
 # Build your Rust application
 RUN cargo build --release
@@ -31,13 +31,12 @@ RUN cargo build --release
 # Need debian as a base image to execute the built program
 FROM debian:bookworm
 
-RUN apt-get update && apt-get install -y libpcap-dev libc6
+RUN apt-get update && apt-get install -y libpcap-dev libc6 gcc
 
 WORKDIR /usr/src/ids
 
 COPY --from=builder /usr/src/ids/libtorch/lib/* /usr/lib/
 COPY --from=builder /usr/src/ids/ /usr/src/ids 
-COPY --from=builder /usr/src/ids/pcap /usr/src/ids/dataset/
 
 EXPOSE 8000
 
