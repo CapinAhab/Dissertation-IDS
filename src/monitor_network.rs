@@ -1,20 +1,7 @@
 use pcap::{Device, Capture};
 use etherparse::{SlicedPacket,TransportSlice};
 use etherparse::err::packet::SliceError;
-use libc;
 use serde::{Serialize, Deserialize};
-
-//Struct to hold packet data, makes it easy to turn to jasona nd send to user
-pub struct PacketData{
-    //Using the time in the format provided by pcap
-    ts: libc::timeval,
-    caplen: u32,
-    len: u32,
-    link: i64,
-    vlan: i64,
-    net: i64,
-    transport: i64
-}
 
 //struct reprsenting packet data, simplified for the front end
 //inherits function that make it easy to convert to json
