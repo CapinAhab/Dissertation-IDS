@@ -24,7 +24,7 @@ sudo docker build -t ids -f Dockerfile-dataset .
 
 To ensure the models generated aren't overfitted to the training dataset, I have created testing data of malicious and non-malicious packet captures taken from a virtual network.
 
-![Test network topology]("readme_images/virtual-network-topology.webp")
+![Test network topology](readme_images/virtual-network-topology.webp)
 
 The above image shows the topology of the test network used: a virtual internal network (no internet access) with just a target Debian machine with an IP of 192.168.100.193 and an attacking Kali Linux machine with an IP of 192.168.100.193.
 
