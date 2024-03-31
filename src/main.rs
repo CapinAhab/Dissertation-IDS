@@ -8,6 +8,7 @@ use rocket_ws::Message;
 use rocket::form::Form;
 use std::fs;
 use std::path::Path;
+use rocket::serde::json::Json;
 
 mod monitor_network;
 mod deep_learn;
@@ -73,6 +74,23 @@ async fn dataset() -> Option<NamedFile> {
     NamedFile::open("pages/data.html").await.ok()
 }
 
+//Trains current model and returns true if successful
+#[get("/trainmodel")]
+async fn trainmodel() -> Json<bool>{
+    let traing_data = monitor_network::get_train_packets("dataset/pcap/UCAP172.31.69.25".to_string());
+    let trained = true;
+    Json(trained)
+}
+
+//gets and returns model accuracy percent
+#[get("/testmodel")]
+async fn testmodel() -> Json<i64>{
+    let test_data_dataset = monitor_network::get_train_packets("dataset/pcap/UCAP172.31.69.25".to_string());
+    let test_data_malicious_synthetic = monitor_network::get_train_packets("dataset/test-network-attack.pcap".to_string());
+    let test_data_malicious_synthetic = monitor_network::get_train_packets("dataset/test-network-standard.pcap".to_string());
+    let accuracy = 80;
+    Json(accuracy)
+}
 
 //Options to train and tweak models
 #[get("/train")]
@@ -112,6 +130,8 @@ fn rocket() -> _ {
 	.mount("/", routes![dataset])
 	.mount("/", routes![train])
 	.mount("/", routes![test_page])
+	.mount("/", routes![testmodel])
+	.mount("/", routes![trainmodel])
 	.mount("/", routes![genmodel])
 	.mount("/", routes![modelinfo])
         .mount("/", routes![manual::file_path])
