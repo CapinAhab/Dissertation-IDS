@@ -80,14 +80,15 @@ impl CNNModelConfig {
         }
     }
 }
-/*
+
 impl<B: Backend> CNNModel<B> {
     pub fn forward(&self, input: Tensor<B, 3>) -> Tensor<B, 3> {
+	let x = input; //Dummy variable
         let x = self.input_layer.forward(x);
+	let x = self.activation.forward(x);
         self.output_layer.forward(x)
     }
 }
-*/
 
 
 pub fn gen_net(layers: i64, neurons: i64, lstm_model: bool){
