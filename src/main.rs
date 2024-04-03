@@ -6,7 +6,6 @@ use rocket_ws::WebSocket;
 use crate::rocket::futures::SinkExt;
 use rocket_ws::Message;
 use rocket::form::Form;
-use std::fs;
 use std::path::Path;
 
 mod monitor_network;

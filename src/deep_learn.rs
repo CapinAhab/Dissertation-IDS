@@ -3,12 +3,13 @@ use burn::{
     module::Module,
     nn::{
         conv::{Conv2d, Conv2dConfig},
+        conv::{Conv1d, Conv1dConfig},
         pool::{AdaptiveAvgPool2d, AdaptiveAvgPool2dConfig},
         Dropout, DropoutConfig, LstmConfig, Lstm, ReLU,
     },
     tensor::{backend::Backend, Tensor},
 };
-
+/*
 pub struct DefaultModel<B: Backend> {
     input_layer:Lstm<B>,
     output_layer: Lstm<B>,
@@ -39,16 +40,55 @@ impl DefaultModelConfig {
         }
     }
 }
+*/
 /*
 impl<B: Backend> DefaultModel<B> {
-    pub fn forward(&self, input: Tensor<B, 2>) -> Tensor<B, 2> {
-        let x = input.detach();
+    pub fn forward(&self, input: Tensor<B, 3>) -> Tensor<B, 3> {
         let x = self.input_layer.forward(x);
-        let x = self.activation.forward(x);
         self.output_layer.forward(x)
     }
 }
 */
+
+pub struct CNNModel<B: Backend> {
+    input_layer:Conv1d<B>,
+    output_layer: Conv1d<B>,
+    activation: ReLU,
+}
+
+#[derive(Config)]
+pub struct CNNModelConfig {
+
+    #[config(default = 35)]
+    pub num_features: usize,
+
+    #[config(default = 35)]
+    pub hidden_size: usize,
+}
+
+impl CNNModelConfig {
+    pub fn init<B: Backend>(&self, device: &B::Device) -> CNNModel<B> {
+        let input_layer = Conv1dConfig::new(self.num_features, self.hidden_size, 3)
+            .init(device);
+        let output_layer = Conv1dConfig::new(self.hidden_size, 1, 3)
+            .init(device);
+
+        CNNModel{
+            input_layer,
+            output_layer,
+            activation: ReLU::new(),
+        }
+    }
+}
+/*
+impl<B: Backend> CNNModel<B> {
+    pub fn forward(&self, input: Tensor<B, 3>) -> Tensor<B, 3> {
+        let x = self.input_layer.forward(x);
+        self.output_layer.forward(x)
+    }
+}
+*/
+
 
 pub fn gen_net(layers: i64, neurons: i64, lstm_model: bool){
     let model = false;

@@ -1,6 +1,5 @@
 use pcap::{Device, Capture};
 use etherparse::{SlicedPacket,TransportSlice};
-use etherparse::err::packet::SliceError;
 use serde::{Serialize, Deserialize};
 
 //struct reprsenting packet data, simplified for the front end
