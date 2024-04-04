@@ -66,7 +66,6 @@ impl NetworkHandler{
 	NetworkHandler{
 	    cap: Capture::from_device(main_device).unwrap()
 		.promisc(true) //Needs to be in promiscuous mode to get all network traffic
-		.snaplen(5000)
 		.immediate_mode(true)
 		.open().unwrap()
 	}
