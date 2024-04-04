@@ -1,20 +1,7 @@
 use pcap::{Device, Capture};
 use etherparse::{SlicedPacket,TransportSlice};
 use etherparse::err::packet::SliceError;
-use libc;
 use serde::{Serialize, Deserialize};
-
-//Struct to hold packet data, makes it easy to turn to jasona nd send to user
-pub struct PacketData{
-    //Using the time in the format provided by pcap
-    ts: libc::timeval,
-    caplen: u32,
-    len: u32,
-    link: i64,
-    vlan: i64,
-    net: i64,
-    transport: i64
-}
 
 //struct reprsenting packet data, simplified for the front end
 //inherits function that make it easy to convert to json
@@ -66,36 +53,59 @@ impl NetworkHandler{
 	NetworkHandler{
 	    cap: Capture::from_device(main_device).unwrap()
 		.promisc(true) //Needs to be in promiscuous mode to get all network traffic
-		.immediate_mode(true)
 		.open().unwrap()
 	}
     }
 
     //Gets packets and returns simplified struct to front end
-    pub fn get_one_packet_front_end(mut self) -> Result<FrontEndPacketData, bool>{
-	let packet = self.cap.next_packet();
-	let frame = packet.unwrap().to_vec();
-	match Self::process_packet(frame){
-	    Err(value) => {
-		return Err(value)
+    pub fn get_many_packet_front_end(&mut self) -> Option<Result<FrontEndPacketData, bool>>{
+	while let Ok(packet) = self.cap.next_packet(){
+	    let frame = packet.to_vec();
+	    match process_packet(frame){
+		Err(value) => {
+		    return Some(Err(value))
+		}
+		Ok(value) => {
+		    return Some(Ok(value))
+		}
 	    }
+	}
+	None
+    }
+}
+
+
+
+pub fn get_train_packets(file_loc: String) -> Vec<FrontEndPacketData>{
+    let mut cap = Capture::from_file(file_loc).unwrap();
+
+    let mut captures = Vec::new();
+
+    while let Ok(packet) = cap.next_packet() {
+        println!("Packet captured: {:?}", packet);
+	let frame = packet.to_vec();
+	match process_packet(frame){
 	    Ok(value) => {
-		return Ok(value)
+		captures.push(value);
+	    },
+	    Err(_e) =>{
 	    }
 	}
     }
 
-    //Converts packet into a struct for user front end
-    fn process_packet(frame :Vec<u8>) -> Result<FrontEndPacketData, bool>{ 
-	match SlicedPacket::from_ethernet(&frame) {
-	    Err(value) => {
-		return Err(false)
-	    },
-	    Ok(value) => {
-		let test_var =value.clone().transport.unwrap();
-		match test_var{
-		    TransportSlice::Tcp(tcp_slice) => {
+    return captures
+}
 
+fn process_packet(frame :Vec<u8>) -> Result<FrontEndPacketData, bool>{ 
+    match SlicedPacket::from_ethernet(&frame) {
+	Err(value) => {
+	    return Err(false)
+	},
+	Ok(value) => {
+	    if let Some(transport) = value.clone().transport {
+		match value.clone().transport.unwrap(){
+		    TransportSlice::Tcp(tcp_slice) => {
+			println!("{:?}", tcp_slice.clone());
 			let packet = FrontEndPacketData{
 			    source: value.link.clone().unwrap().to_header().unwrap().source,
 			    destination: value.link.clone().unwrap().to_header().unwrap().destination,
@@ -117,10 +127,10 @@ impl NetworkHandler{
 		    },
 		    _ => return Err(false)
 		};
-
+	    }
+	    else{
+		return Err(false);
 	    }
 	}
     }
 }
-
-

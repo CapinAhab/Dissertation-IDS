@@ -34,8 +34,7 @@ WORKDIR /usr/src/ids
 
 COPY --from=builder /usr/src/ids/libtorch/lib/* /usr/lib/
 COPY --from=builder /usr/src/ids/ /usr/src/ids 
-COPY --from=builder /usr/src/ids/target/release/ids .
 
 EXPOSE 8000
 
-CMD ["./ids"]
+CMD ["./target/release/ids"]
