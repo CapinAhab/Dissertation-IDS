@@ -12,7 +12,7 @@ lazy_static = "1.4.0"
 libc = "0.2.153"
 linfa = "0.7.0"
 pcap = "1.2.0"
-rocket = "0.5.0"
+rocket = {version="0.5.0", features=["json"]}
 rocket_ws = "0.1.0"
 serde = "1.0.197"
 serde_json = "1.0.114"

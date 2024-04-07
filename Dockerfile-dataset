@@ -21,9 +21,13 @@ RUN wget https://download.pytorch.org/libtorch/cpu/libtorch-cxx11-abi-shared-wit
     && unzip libtorch-cxx11-abi-shared-with-deps-2.2.0+cpu.zip \
     && rm libtorch-cxx11-abi-shared-with-deps-2.2.0+cpu.zip
 
-RUN aws s3 cp --no-sign-request --region eu-west-2 "s3://cse-cic-ids2018/Original Network Traffic and Log data/Thursday-15-02-2018/pcap.zip" dataset/ \
-    && unzip dataset/pcap.zip -d dataset/ \
-    && rm dataset/pcap.zip
+RUN if [ ! -d "dataset/pcap" ]; then \
+        aws s3 cp --no-sign-request --region eu-west-2 "s3://cse-cic-ids2018/Original Network Traffic and Log data/Thursday-15-02-2018/pcap.zip" dataset/ && \
+        unzip dataset/pcap.zip -d dataset/ && \
+        rm dataset/pcap.zip; \
+    else \
+        echo "dataset/pcap folder already exists."; \
+    fi
 
 # Build your Rust application
 RUN cargo build --release

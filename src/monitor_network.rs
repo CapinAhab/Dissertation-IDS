@@ -52,7 +52,6 @@ impl NetworkHandler{
 	NetworkHandler{
 	    cap: Capture::from_device(main_device).unwrap()
 		.promisc(true) //Needs to be in promiscuous mode to get all network traffic
-		.snaplen(5000)
 		.open().unwrap()
 	}
     }
@@ -61,8 +60,7 @@ impl NetworkHandler{
     pub fn get_many_packet_front_end(&mut self) -> Option<Result<FrontEndPacketData, bool>>{
 	while let Ok(packet) = self.cap.next_packet(){
 	    let frame = packet.to_vec();
-	    println!("{:?}",frame.clone());
-	    match Self::process_packet(frame){
+	    match process_packet(frame){
 		Err(value) => {
 		    return Some(Err(value))
 		}
@@ -73,18 +71,40 @@ impl NetworkHandler{
 	}
 	None
     }
+}
 
-    //Converts packet into a struct for user front end
-    fn process_packet(frame :Vec<u8>) -> Result<FrontEndPacketData, bool>{ 
-	match SlicedPacket::from_ethernet(&frame) {
-	    Err(value) => {
-		return Err(false)
-	    },
+
+
+pub fn get_train_packets(file_loc: String) -> Vec<FrontEndPacketData>{
+    let mut cap = Capture::from_file(file_loc).unwrap();
+
+    let mut captures = Vec::new();
+
+    while let Ok(packet) = cap.next_packet() {
+        println!("Packet captured: {:?}", packet);
+	let frame = packet.to_vec();
+	match process_packet(frame){
 	    Ok(value) => {
-		let test_var =value.clone().transport.unwrap();
-		match test_var{
-		    TransportSlice::Tcp(tcp_slice) => {
+		captures.push(value);
+	    },
+	    Err(_e) =>{
+	    }
+	}
+    }
 
+    return captures
+}
+
+fn process_packet(frame :Vec<u8>) -> Result<FrontEndPacketData, bool>{ 
+    match SlicedPacket::from_ethernet(&frame) {
+	Err(value) => {
+	    return Err(false)
+	},
+	Ok(value) => {
+	    if let Some(transport) = value.clone().transport {
+		match value.clone().transport.unwrap(){
+		    TransportSlice::Tcp(tcp_slice) => {
+			println!("{:?}", tcp_slice.clone());
 			let packet = FrontEndPacketData{
 			    source: value.link.clone().unwrap().to_header().unwrap().source,
 			    destination: value.link.clone().unwrap().to_header().unwrap().destination,
@@ -106,10 +126,10 @@ impl NetworkHandler{
 		    },
 		    _ => return Err(false)
 		};
-
+	    }
+	    else{
+		return Err(false);
 	    }
 	}
     }
 }
-
-
