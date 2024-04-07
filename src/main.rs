@@ -6,12 +6,18 @@ use rocket_ws::WebSocket;
 use crate::rocket::futures::SinkExt;
 use rocket_ws::Message;
 use rocket::form::Form;
-use std::fs;
 use std::path::Path;
+use lazy_static::lazy_static;
+use std::sync::Mutex;
 use rocket::serde::json::Json;
 
 mod monitor_network;
 mod deep_learn;
+
+
+lazy_static! {
+    static ref MODEL_TRAINED: Mutex<bool> = Mutex::new(true);
+}
 
 
 //Form input for model parameters
@@ -95,7 +101,7 @@ async fn testmodel() -> Json<i64>{
 //Options to train and tweak models
 #[get("/train")]
 async fn train() -> Option<NamedFile> {
-    //Only show train page if training file installed
+    //Only show train page if training dataset is installed
     if Path::new("dataset/pcap").exists() {
 	NamedFile::open("pages/train.html").await.ok()
     }
@@ -118,6 +124,8 @@ async fn test_page() -> Option<NamedFile> {
 
 #[post("/genmodel", data = "<model_data>")]
 async fn genmodel(model_data: Form<ModelPerameters>){
+    let mut trained = MODEL_TRAINED.lock().unwrap();
+    *trained = false;
     deep_learn::gen_net(model_data.layers, model_data.neurons, model_data.lstm_model);
 }
 
