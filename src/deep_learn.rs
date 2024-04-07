@@ -101,5 +101,6 @@ impl<B: Backend> CNNModel<B> {
 
 
 pub fn gen_net(layers: i64, neurons: i64, lstm_model: bool){
+
     let model = false;
 }
