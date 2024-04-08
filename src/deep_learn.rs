@@ -50,12 +50,30 @@ impl<B: Backend> DefaultModel<B> {
 }
 */
 
+
+//Default model, by deriving the model trait it describes a neural net
+#[derive(Module, Debug)]
 pub struct CNNModel<B: Backend> {
     input_layer:Conv1d<B>,
-    output_layer: Vec<Conv1d<B>>,
+    output_layer: Vec<Conv1d<B>>,//Vec used to store variable number of layers
     activation: ReLU,
 }
 
+impl<B: Backend> CNNModel<B> {
+    pub fn forward(&mut self, input: Tensor<B, 3>) -> Tensor<B, 3> {
+	let mut x = input;
+        x = self.input_layer.forward(x);
+	for layer in self.output_layer.iter_mut(){
+	    x = self.activation.forward(x);
+	    x = layer.forward(x);
+	}
+	return x
+    }
+}
+
+
+//Models can't be created directly, instead they have to be made via configs
+//Config for CNN model, defaults to 1 layer of 35 input and output neurones
 #[derive(Config)]
 pub struct CNNModelConfig {
 
@@ -69,10 +87,14 @@ pub struct CNNModelConfig {
     pub layers: i64,
 }
 
+//Config lets user create numerous layers of the same size
+//Returns configured model
 impl CNNModelConfig {
     pub fn init<B: Backend>(&self, device: &B::Device) -> CNNModel<B> {
         let input_layer = Conv1dConfig::new(self.num_features, self.hidden_size, 3)
             .init(device);
+
+	//Vector holds variable number of layers
         let mut output_layer = Vec::new();
 
 	for _ in 1..self.layers{
@@ -86,19 +108,6 @@ impl CNNModelConfig {
         }
     }
 }
-
-impl<B: Backend> CNNModel<B> {
-    pub fn forward(&mut self, input: Tensor<B, 3>) -> Tensor<B, 3> {
-	let mut x = input; //Dummy variable
-        x = self.input_layer.forward(x);
-	for layer in self.output_layer.iter_mut(){
-	    x = self.activation.forward(x);
-	    x = layer.forward(x);
-	}
-	return x
-    }
-}
-
 
 pub fn gen_net(layers: i64, neurons: i64, lstm_model: bool){
 
