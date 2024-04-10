@@ -10,6 +10,7 @@ use std::path::Path;
 use lazy_static::lazy_static;
 use std::sync::Mutex;
 use rocket::serde::json::Json;
+use burn::backend::Wgpu;
 
 mod monitor_network;
 mod deep_learn;
@@ -18,7 +19,7 @@ mod deep_learn;
 //Global variables, probably no race conditions due to lock
 lazy_static! {
     static ref MODEL_TRAINED: Mutex<bool> = Mutex::new(true);
-    static ref MODEL: Mutex<CNNModel<LibTorchDevice::Cpu>> = Mutex::new(deep_learn::gen_net(10,10,3));
+    static ref MODEL: Mutex<deep_learn::CNNModel<Wgpu>> = Mutex::new(deep_learn::gen_net(10,10,false));
 }
 
 

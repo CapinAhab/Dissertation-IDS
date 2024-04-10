@@ -2,55 +2,13 @@ use burn::{
     config::Config,
     module::Module,
     nn::{
-        conv::{Conv2d, Conv2dConfig},
+        //conv::{Conv1d, Conv1dConfig},
         conv::{Conv1d, Conv1dConfig},
-        pool::{AdaptiveAvgPool2d, AdaptiveAvgPool2dConfig},
-        Dropout, DropoutConfig, LstmConfig, Lstm, ReLU,
+        ReLU,
     },
     tensor::{backend::Backend, Tensor},
 };
-use burn_tch::{LibTorch, LibTorchDevice};
-/*
-pub struct DefaultModel<B: Backend> {
-    input_layer:Lstm<B>,
-    output_layer: Lstm<B>,
-    activation: ReLU,
-}
-
-#[derive(Config)]
-pub struct DefaultModelConfig {
-
-    #[config(default = 35)]
-    pub num_features: usize,
-
-    #[config(default = 35)]
-    pub hidden_size: usize,
-}
-
-impl DefaultModelConfig {
-    pub fn init<B: Backend>(&self, device: &B::Device) -> DefaultModel<B> {
-        let input_layer = LstmConfig::new(self.num_features, self.hidden_size, true)
-            .init(device);
-        let output_layer = LstmConfig::new(self.hidden_size, 1, true)
-            .init(device);
-
-        DefaultModel {
-            input_layer,
-            output_layer,
-            activation: ReLU::new(),
-        }
-    }
-}
-*/
-/*
-impl<B: Backend> DefaultModel<B> {
-    pub fn forward(&self, input: Tensor<B, 3>) -> Tensor<B, 3> {
-        let x = self.input_layer.forward(x);
-        self.output_layer.forward(x)
-    }
-}
-*/
-
+use burn::backend::Wgpu;
 
 //Default model, by deriving the model trait it describes a neural net
 #[derive(Module, Debug)]
@@ -78,11 +36,11 @@ impl<B: Backend> CNNModel<B> {
 #[derive(Config,Debug)]
 pub struct CNNModelConfig {
 
-    #[config(default = 35)]
-    pub num_features: usize,
+    #[config(default = 3)]
+    pub num_features: i64,
 
     #[config(default = 35)]
-    pub hidden_size: usize,
+    pub hidden_size: i64,
 
     #[config(default = 1)]
     pub layers: i64,
@@ -92,14 +50,14 @@ pub struct CNNModelConfig {
 //Returns configured model
 impl CNNModelConfig {
     pub fn init<B: Backend>(&self, device: &B::Device) -> CNNModel<B> {
-        let input_layer = Conv1dConfig::new(self.num_features, self.hidden_size, 3)
+        let input_layer = Conv1dConfig::new(self.num_features.try_into().unwrap(), self.hidden_size.try_into().unwrap(), 3)
             .init(device);
 
 	//Vector holds variable number of layers
         let mut output_layer = Vec::new();
 
 	for _ in 1..self.layers{
-	    output_layer.push(Conv1dConfig::new(self.hidden_size, 1, 3).init(device));
+	    output_layer.push(Conv1dConfig::new(self.hidden_size.try_into().unwrap(), 1, 3).init(device));
 	}
 
         CNNModel{
@@ -110,18 +68,15 @@ impl CNNModelConfig {
     }
 }
 
-pub fn gen_net(layers: i64, neurons: i64, lstm_model: bool) -> CNNModel<LibTorchDevice::Cpu>{
-    let device = LibTorchDevice::Cpu;
-    
+pub fn gen_net(layers: i64, neurons: i64, lstm_model: bool) -> CNNModel<Wgpu>{
     let config = CNNModelConfig {
-	num_features: 35,
-	hidden_size: 35,
-	layers: 3,
+	num_features: 4,
+	hidden_size: neurons,
+	layers: layers,
     };
 
-    let device: BackendType::Device = /* initialize your backend device here */;
-
-    let cnn_model: CNNModel<LibTorchDevice::Cpu> = config.init(&device);
+    let device = Default::default();
+    let cnn_model: CNNModel<Wgpu> = config.init(&device);
 
     return cnn_model
 

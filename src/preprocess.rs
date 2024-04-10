@@ -27,11 +27,11 @@ impl<B: Backend> MNISTBatcher<B> {
 
 
 
-pub fn generate_tensor_from_data(data: monitor_network::FrontEndPacketData, B: Backend) -> Tensor<B, 1>{
+pub fn generate_tensor_from_data(data: monitor_network::FrontEndPacketData, B: Backend) -> Tensor<B, 2>{
     let device = B::Device::default();
     //Convert all fields to u32
     //header_len might be cut short but unlikely to see in real world data
-    let packet_tensor = Tensor::<B, 1>::from_ints(
+    let packet_tensor = Tensor::<B, 2>::from_ints(
 	data.protocole as u32,
 	data.source_port as u32,
 	data.destination_port as u32,
