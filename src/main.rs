@@ -15,8 +15,10 @@ mod monitor_network;
 mod deep_learn;
 
 
+//Global variables, probably no race conditions due to lock
 lazy_static! {
     static ref MODEL_TRAINED: Mutex<bool> = Mutex::new(true);
+    static ref MODEL: Mutex<CNNModel<LibTorchDevice::Cpu>> = Mutex::new(deep_learn::gen_net(10,10,3));
 }
 
 
@@ -84,8 +86,10 @@ async fn dataset() -> Option<NamedFile> {
 #[get("/trainmodel")]
 async fn trainmodel() -> Json<bool>{
     let traing_data = monitor_network::get_train_packets("dataset/pcap/UCAP172.31.69.25".to_string());
-    let trained = true;
-    Json(trained)
+    let mut trained = MODEL_TRAINED.lock().unwrap();
+    *trained = true;
+    let test_var=true;
+    Json(test_var)
 }
 
 //gets and returns model accuracy percent

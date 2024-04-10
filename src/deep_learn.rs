@@ -9,6 +9,7 @@ use burn::{
     },
     tensor::{backend::Backend, Tensor},
 };
+use burn_tch::{LibTorch, LibTorchDevice};
 /*
 pub struct DefaultModel<B: Backend> {
     input_layer:Lstm<B>,
@@ -73,8 +74,8 @@ impl<B: Backend> CNNModel<B> {
 
 
 //Models can't be created directly, instead they have to be made via configs
-//Config for CNN model, defaults to 1 layer of 35 input and output neurones
-#[derive(Config)]
+//Config for CNN model, defaults to 1 layer of 35 input and output neurons
+#[derive(Config,Debug)]
 pub struct CNNModelConfig {
 
     #[config(default = 35)]
@@ -109,7 +110,19 @@ impl CNNModelConfig {
     }
 }
 
-pub fn gen_net(layers: i64, neurons: i64, lstm_model: bool){
+pub fn gen_net(layers: i64, neurons: i64, lstm_model: bool) -> CNNModel<LibTorchDevice::Cpu>{
+    let device = LibTorchDevice::Cpu;
+    
+    let config = CNNModelConfig {
+	num_features: 35,
+	hidden_size: 35,
+	layers: 3,
+    };
 
-    let model = false;
+    let device: BackendType::Device = /* initialize your backend device here */;
+
+    let cnn_model: CNNModel<LibTorchDevice::Cpu> = config.init(&device);
+
+    return cnn_model
+
 }
