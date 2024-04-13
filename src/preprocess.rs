@@ -1,34 +1,18 @@
-use burn::{
-    data::{
-        dataloader::batcher::Batcher,
-        dataset::{
-            transform::{PartialDataset, ShuffledDataset},
-            Dataset, HuggingfaceDatasetLoader, SqliteDataset,
-        },
-    },
-    prelude::*,
-};
+use std::fs::File;
+use ndarray::{Array2};
+use ndarray_csv::ReadError;
+use linfa::Dataset;
+use linfa_reduction::Pca;
+use linfa::prelude::*;
+use csv::Writer;
+use std::error::Error;
+use ndarray::Axis;
 
-mod monitor_network;
-
-#[derive(Clone, Debug)]
-pub struct MNISTBatcher<B: Backend> {
-    device: B::Device,
-    packets: Tensor<B, 1>
-    labels: Tensor<B, 1>
-}
-
-impl<B: Backend> MNISTBatcher<B> {
-    pub fn new(device: B::Device) -> Self {
-        Self { device }
-    }
-}
+//mod monitor_network;
 
 
-
-
+/*
 pub fn generate_tensor_from_data(data: monitor_network::FrontEndPacketData, B: Backend) -> Tensor<B, 2>{
-    let device = B::Device::default();
     //Convert all fields to u32
     //header_len might be cut short but unlikely to see in real world data
     let packet_tensor = Tensor::<B, 2>::from_ints(
@@ -48,39 +32,58 @@ pub fn generate_tensor_from_data(data: monitor_network::FrontEndPacketData, B: B
 
     return packet_tensor
 }
+ */
 
-//All data divided by max datatype value to get them all on scale of 0-1
-//Done so all features contribute equally (not thrown of by large values in packet length)
-pub fn generate_tensor_from_data_min_max_scale(data: monitor_network::FrontEndPacketData, B: Backend) -> Tensor<B, 1>{
-    let device = B::Device::default();
-    //Convert all fields to u32
-    let packet_tensor = Tensor::<B, 1>::from_floats(
-	(data.protocole / u16::MAX) as f32,
-	(data.source_port / u16::MAX) as f32,
-	(data.destination_port / u16::MAX) as f32,
-	(data.sequence_number / u32::MAX) as f32 ,
-	(data.acknowledgment_number / u32) as f32,
-	data.syn_flag as f32,
-	data.ack_flag as f32,
-	data.fin_flag as f32,
-	data.rst_flag as f32,
-	data.psh_flag as f32,
-	data.urg_flag as f32,
-	(data.header_len / u64::MAX) as f32
-    );
-
-    return packet_tensor
-}
-
+//loads CSV as dataframe that can be preprocessed
 fn load_csv(file_path: &str) -> Result<Array2<f64>, ReadError>{
     let file = File::open(file_path).unwrap();
     return linfa_datasets::array_from_csv(file, true, b',')
 }
 
-fn preprocess(data: Array2<f64>){
+//Applies PCA to reduce dimentionality
+fn preprocess(data: Array2<f64>) -> Array2<f64>{
     let dataset = Dataset::from(data);
-    let embedding = Pca::params(1).fit(&dataset).unwrap();
+    //Conv2d needs 4d tensor so shorten to 4 features
+    let embedding = Pca::params(4).fit(&dataset).unwrap();
     let dataset = embedding.transform(dataset);
-    println!("{:?}", dataset.records());
+    return dataset.records().to_owned();
+}
+
+fn save_to_csv(array: &Array2<f64>, file_path: &str) -> Result<(), Box<dyn Error>> {
+    let file = File::create(file_path)?;
+
+    let mut writer = Writer::from_writer(file);
+    let row_vectors: Vec<Vec<f64>> = array.axis_iter(Axis(0))
+	.map(|row| row.to_vec())
+        .collect();
+
+    for row in row_vectors{
+	writer.write_record(row.iter().map(|&x| x.to_string()))?;
+    }
+
+
+    writer.flush()?;
+
+    Ok(())
+}
+
+
+pub fn process_dataset(file_path: &str, save_path: &str){
+    match load_csv(file_path){
+	Ok(dataset) => {
+	    let preprocessed_dataset = preprocess(dataset);
+	    match save_to_csv(&preprocessed_dataset, save_path){
+		Ok(_done) => {
+		    println!("Done");
+		}
+		Err(_e) => {
+		    println!("Failed");
+		}
+	    }
+	}
+	Err(e) => {
+	    println!("Error {:?}",e)
+	}
+    }
 }
 

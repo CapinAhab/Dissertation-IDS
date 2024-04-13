@@ -2,7 +2,6 @@ use burn::{
     config::Config,
     module::Module,
     nn::{
-        //conv::{Conv1d, Conv1dConfig},
         conv::{Conv1d, Conv1dConfig},
         ReLU,
     },
@@ -79,5 +78,4 @@ pub fn gen_net(layers: i64, neurons: i64, lstm_model: bool) -> CNNModel<Wgpu>{
     let cnn_model: CNNModel<Wgpu> = config.init(&device);
 
     return cnn_model
-
 }
