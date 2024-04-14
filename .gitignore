@@ -68,3 +68,5 @@ set-env.sh
 
 libtorch
 dataset/pcap/
+dataset/preprocess-test-network-attack.csv
+dataset/preprocess-test-network-standard.csv
