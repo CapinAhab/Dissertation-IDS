@@ -81,5 +81,5 @@ def test():
 
 if __name__ == "__main__":
     MODEL = LSTMModel(3, 35, load_dataset())
-    MODEL.train(500,4)
+    #MODEL.train(500,4)
     app.run(debug=True)

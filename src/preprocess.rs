@@ -7,6 +7,7 @@ use linfa::prelude::*;
 use csv::Writer;
 use std::error::Error;
 use ndarray::Axis;
+use linfa_preprocessing::norm_scaling::NormScaler;
 
 //mod monitor_network;
 
@@ -45,7 +46,9 @@ fn preprocess(data: Array2<f64>) -> Array2<f64>{
     let dataset = Dataset::from(data);
     //Conv2d needs 4d tensor so shorten to 4 features
     let embedding = Pca::params(4).fit(&dataset).unwrap();
-    let dataset = embedding.transform(dataset);
+    let mut dataset = embedding.transform(dataset);
+    let scaler = NormScaler::l2();
+    dataset = scaler.transform(dataset);
     return dataset.records().to_owned();
 }
 
