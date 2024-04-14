@@ -1,7 +1,7 @@
 import numpy as np
 import requests
 import pandas as pd
-from flask import Flask, request
+from flask import Flask, request, jsonify
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import MinMaxScaler
 from tensorflow.keras.models import Sequential
@@ -39,11 +39,12 @@ class LSTMModel:
                 model.add(LSTM(neurones, return_sequences=True))
         #Has on output as binary classification problem
         model.add(Dense(1, activation='sigmoid'))
+
+        model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
         self.model = model
 
     def train(self, epochs):
         #Binary loss because binary classification problem
-        self.model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
         self.model.fit(self.X_train, self.Y_train, epochs=500, batch_size=20)
 
     def test(self):
@@ -77,9 +78,12 @@ def train():
     return "Model trained successfully"
 
 
-@app.route('/test', methods=['POST'])
+@app.route('/test', methods=['GET'])
 def test():
-    return "Model tested successfully"
+    accuracy = MODEL.test()
+    print(accuracy)
+    data = jsonify({ "accuracy" : accuracy})
+    return data
 
 
 

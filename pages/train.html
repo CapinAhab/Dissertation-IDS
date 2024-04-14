@@ -37,15 +37,14 @@
     </form>
 
     <form action="http://127.0.0.1:5000/train" method="post">
-	<label for="epochs">Epochs:<label>
+	<label for="epochs">Epochs:</label>
 	<input type="number" id="epochs" name="epochs" required><br><br>
 	<input type="submit" value="Submit">
     </form>
 
-    <p id="train_status">untrained</p>
-    <button id="train_button">Train</button>
     <p id="accuracy">0%</p>
     <button id="test_button">Test</button>
+
     <script src="/js/train-script.js"></script>
     <script src="/js/test-script.js"></script>
     <script src="/js/process-script.js"></script>
