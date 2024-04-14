@@ -19,20 +19,12 @@ class LSTMModel:
         self.X_train, self.X_test, self.Y_train, self.Y_test = train_test_split(data.drop(columns=["target"]), data["target"], test_size=0.2, shuffle=False, random_state=42)
 
 
-        #print(self.X_train.shape[1])
-        #print(self.X_train.shape[0])
-        
-        #fuck = np.reshape(self.X_train, (self.X_train.shape[0], 1, self.X_train.shape[1]))
-        #input_shape=(X_train.shape[1], 1)
-
-
-
         model = Sequential()
         for i in range(layers):
             if i == 0:
                 #has 4 as input shape because thats number of features after PCA
                 model.add(LSTM(neurones, input_shape=(self.X_train.shape[1], 1), return_sequences=True))
-            elif i == num_layers - 1:
+            elif i == layers - 1:
                 # Last layer doesn't return sequences
                 model.add(LSTM(neurones))
             else:
@@ -43,9 +35,9 @@ class LSTMModel:
         model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
         self.model = model
 
-    def train(self, epochs):
+    def train(self, epochs, batch):
         #Binary loss because binary classification problem
-        self.model.fit(self.X_train, self.Y_train, epochs=500, batch_size=20)
+        self.model.fit(self.X_train, self.Y_train, epochs=epochs, batch_size=batch)
 
     def test(self):
         loss, accuracy = self.model.evaluate(self.X_test, self.Y_test)
@@ -74,7 +66,7 @@ def genmodel():
 
 @app.route('/train', methods=['POST'])
 def train():
-    MODEL.train(int(request.form['epochs']))
+    MODEL.train(int(request.form['epochs']), int(request.form['batch']))
     return "Model trained successfully"
 
 
@@ -88,5 +80,6 @@ def test():
 
 
 if __name__ == "__main__":
-    MODEL = LSTMModel(1, 1, load_dataset())
+    MODEL = LSTMModel(3, 35, load_dataset())
+    MODEL.train(500,4)
     app.run(debug=True)
