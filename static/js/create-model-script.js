@@ -1,10 +1,12 @@
-document.getElementById("trainform").addEventListener("submit", function(event) {
+
+document.getElementById("createform").addEventListener("submit", function(event) {
     event.preventDefault(); // Prevent the default form submission
 
     var form = event.target;
     var formData = new FormData(form);
 
-    document.getElementById("trained").innerText = "Training....";
+    document.getElementById("created").innerText = "Creating Model....";
+
     fetch(form.action, {
         method: 'POST',
         body: formData
@@ -12,7 +14,8 @@ document.getElementById("trainform").addEventListener("submit", function(event) 
 
     .then(response => response.text())
     .then(data => {
-        document.getElementById("trained").innerText = "Trained";
+
+        document.getElementById("created").innerText = "Model created";
     })
     .catch(error => {
         console.error('Error:', error);
