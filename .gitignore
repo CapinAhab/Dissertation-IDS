@@ -70,6 +70,7 @@ libtorch
 dataset/pcap/
 dataset/preprocess-test-network-attack.csv
 dataset/preprocess-test-network-standard.csv
+dataset/preprocess-test-network-standardwebtraffic.csv
 
 
  Byte-compiled / optimized / DLL files
