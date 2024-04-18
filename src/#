@@ -10,7 +10,6 @@ use std::path::Path;
 use lazy_static::lazy_static;
 use std::sync::Mutex;
 use rocket::serde::json::Json;
-use std::fs;
 
 mod monitor_network;
 mod deep_learn;
@@ -129,14 +128,8 @@ async fn test_page() -> Option<NamedFile> {
 
 #[get("/preprocess-data")]
 async fn preprocessdata(){
-    //Need check so thread doesn't panic if tshark pre-processing hasn't been done
-    if fs::metadata("./dataset/test-network-attack.csv").is_ok() {
-	preprocess::process_dataset("./dataset/test-network-attack.csv", "./dataset/preprocess-test-network-attack.csv");
-    }
-
-    if fs::metadata("./dataset/test-network-standard-webtraffic.csv").is_ok() {
-	preprocess::process_dataset("./dataset/test-network-standard-webtraffic.csv", "./dataset/preprocess-test-network-standard-webtraffic.csv");
-    }
+    preprocess::process_dataset("./dataset/test-network-attack.csv", "./dataset/preprocess-test-network-attack.csv");
+    preprocess::process_dataset("./dataset/test-network-standard-webtraffic.csv", "./dataset/preprocess-test-network-standard-webtraffic.csv");
 }
 
 

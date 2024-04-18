@@ -46,10 +46,17 @@ class LSTMModel:
 
 def load_dataset():
     #No specific column names, made from PCA
-    df = pd.read_csv('dataset/preprocess-test-network-attack.csv', header=None, names=['Column1', 'Column2', 'Column3', 'Column4'])
+    malicious_df = pd.read_csv('dataset/preprocess-test-network-attack.csv', header=None, names=['Column1', 'Column2', 'Column3', 'Column4'])
 
     #All packets malicious assumed
-    df['target'] = 1
+    malicious_df['target'] = 1
+
+
+    standard_df = pd.read_csv('dataset/preprocess-test-network-standard-webtraffic.csv', header=None, names=['Column1', 'Column2', 'Column3', 'Column4'])
+
+    standard_df['target'] = 0
+
+    df = pd.concat([malicious_df, standard_df])
 
     return df
 
