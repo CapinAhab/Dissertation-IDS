@@ -13,12 +13,15 @@ app = Flask(__name__)
 MODEL= None
 
 class LSTMModel:
-    def __init__(self, layers, neurones, data):
+    def __init__(self, layers, neurones, data, test_data):
 
         #No shuffle, LSTM can take sequence of a batch into account
-        #Just used to format data
-        self.X_train, self.X_test, self.Y_train, self.Y_test = train_test_split(data.drop(columns=["target"]), data["target"], test_size=0., shuffle=False, random_state=42)
+        #Just used to format data to the correct shape
+        self.X_train = data.drop(columns=["target"])
+        self.Y_train = data["target"]
 
+        self.X_test = test_data.drop(columns=["target"])
+        self.Y_test = test_data["target"]
 
         model = Sequential()
         for i in range(layers):
@@ -84,7 +87,7 @@ def train():
     return "Model trained successfully"
 
 
-@app.route('/test', methods=['GET'])
+@app.route('/test', methods=['POST'])
 def test():
     accuracy = MODEL.test()
     print(accuracy)
@@ -94,6 +97,6 @@ def test():
 
 
 if __name__ == "__main__":
-    MODEL = LSTMModel(3, 35, load_dataset('dataset/preprocessed/preprocess-test-network-attack.csv', 'dataset/preprocessed/preprocess-test-network-standard-webtraffic.csv'))
+    MODEL = LSTMModel(3, 35, load_dataset('dataset/preprocessed/preprocess-dataset-attack.csv', 'dataset/preprocessed/preprocess-test-network-standard-webtraffic.csv'),load_dataset('dataset/preprocessed/preprocess-test-network-attack.csv', 'dataset/preprocessed/preprocess-test-network-standard-webtraffic-validate.csv'))
     #MODEL.train(500,4)
     app.run(debug=True)
