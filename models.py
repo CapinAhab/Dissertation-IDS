@@ -16,7 +16,8 @@ class LSTMModel:
     def __init__(self, layers, neurones, data):
 
         #No shuffle, LSTM can take sequence of a batch into account
-        self.X_train, self.X_test, self.Y_train, self.Y_test = train_test_split(data.drop(columns=["target"]), data["target"], test_size=0.2, shuffle=False, random_state=42)
+        #Just used to format data
+        self.X_train, self.X_test, self.Y_train, self.Y_test = train_test_split(data.drop(columns=["target"]), data["target"], test_size=0., shuffle=False, random_state=42)
 
 
         model = Sequential()
@@ -44,17 +45,23 @@ class LSTMModel:
         return accuracy
 
 
-def load_dataset():
+def load_dataset(malicious_location, web_location):
     #No specific column names, made from PCA
-    malicious_df = pd.read_csv('dataset/preprocess-test-network-attack.csv', header=None, names=['Column1', 'Column2', 'Column3', 'Column4'])
+    malicious_df = pd.read_csv(malicious_location, header=None, names=['Column1', 'Column2', 'Column3', 'Column4'])
 
     #All packets malicious assumed
     malicious_df['target'] = 1
 
 
-    standard_df = pd.read_csv('dataset/preprocess-test-network-standard-webtraffic.csv', header=None, names=['Column1', 'Column2', 'Column3', 'Column4'])
+    standard_df = pd.read_csv(web_location, header=None, names=['Column1', 'Column2', 'Column3', 'Column4'])
 
     standard_df['target'] = 0
+
+    #Make sure datasets are 50% malicious/non malicious traffic
+    if len(malicious_df) > len(standard_df):
+        malicious_df = malicious_df[:len(standard_df)]
+    else:
+        standard_df = standard_df[:len(malicious_df)]
 
     df = pd.concat([malicious_df, standard_df])
 
@@ -87,6 +94,6 @@ def test():
 
 
 if __name__ == "__main__":
-    MODEL = LSTMModel(3, 35, load_dataset())
+    MODEL = LSTMModel(3, 35, load_dataset('dataset/preprocessed/preprocess-test-network-attack.csv', 'dataset/preprocessed/preprocess-test-network-standard-webtraffic.csv'))
     #MODEL.train(500,4)
     app.run(debug=True)

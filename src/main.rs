@@ -127,16 +127,27 @@ async fn test_page() -> Option<NamedFile> {
     NamedFile::open("pages/test.html").await.ok()
 }
 
+//Prepossesses files generated from tshark
 #[get("/preprocess-data")]
 async fn preprocessdata(){
     //Need check so thread doesn't panic if tshark pre-processing hasn't been done
-    if fs::metadata("./dataset/test-network-attack.csv").is_ok() {
-	preprocess::process_dataset("./dataset/test-network-attack.csv", "./dataset/preprocess-test-network-attack.csv");
+    if fs::metadata("./dataset/preprocessed/test-network-attack.csv").is_ok() {
+	preprocess::process_dataset("./dataset/preprocessed/test-network-attack.csv", "./dataset/preprocessed/preprocess-test-network-attack.csv");
     }
 
-    if fs::metadata("./dataset/test-network-standard-webtraffic.csv").is_ok() {
-	preprocess::process_dataset("./dataset/test-network-standard-webtraffic.csv", "./dataset/preprocess-test-network-standard-webtraffic.csv");
+    if fs::metadata("./dataset/preprocessed/test-network-standard-webtraffic.csv").is_ok() {
+	preprocess::process_dataset("./dataset/preprocessed/test-network-standard-webtraffic.csv", "./dataset/preprocessed/preprocess-test-network-standard-webtraffic.csv");
     }
+
+    if fs::metadata("./dataset/preprocessed/dataset-attack.csv").is_ok() {
+	preprocess::process_dataset("./dataset/preprocessed/dataset-attack.csv", "./dataset/preprocessed/preprocess-dataset-attack.csv");
+    }
+
+    if fs::metadata("./dataset/preprocessed/test-network-standard-webtraffic-validate.csv").is_ok() {
+	preprocess::process_dataset("./dataset/preprocessed/test-network-standard-webtraffic-validate.csv", "./dataset/preprocessed/preprocess-test-network-standard-webtraffic-validate.csv");
+    }
+
+
 }
 
 
