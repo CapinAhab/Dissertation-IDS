@@ -23,6 +23,11 @@ class LSTMModel:
         self.X_test = test_data.drop(columns=["target"])
         self.Y_test = test_data["target"]
 
+        shuffled_test_data = test_data.sample(frac=1).reset_index(drop=True)
+
+        self.X_test_shuffle = shuffled_test_data.drop(columns=["target"])
+        self.Y_test_shuffle = shuffled_test_data["target"]
+
         model = Sequential()
         for i in range(layers):
             if i == 0:
@@ -45,7 +50,8 @@ class LSTMModel:
 
     def test(self):
         loss, accuracy = self.model.evaluate(self.X_test, self.Y_test)
-        return accuracy
+        shuffle_loss, shuffle_accuracy = self.model.evaluate(self.X_test_shuffle, self.Y_test_shuffle)
+        return [loss, accuracy, shuffle_loss, shuffle_accuracy]
 
 
 def load_dataset(malicious_location, web_location):
@@ -74,9 +80,7 @@ def load_dataset(malicious_location, web_location):
 @app.route('/genmodel', methods=['POST'])
 def genmodel():
 
-    dataset = load_dataset()
-
-    lstm_model = LSTMModel(int(request.form['layers']), int(request.form['neurons']), dataset)
+    MODEL = LSTMModel(int(request.form['layers']), int(request.form['neurons']),load_dataset('dataset/preprocessed/preprocess-dataset-attack.csv', 'dataset/preprocessed/preprocess-test-network-standard-webtraffic.csv'),load_dataset('dataset/preprocessed/preprocess-test-network-attack.csv', 'dataset/preprocessed/preprocess-test-network-standard-webtraffic-validate.csv'))
 
     return "Data received successfully"
 
@@ -90,8 +94,8 @@ def train():
 @app.route('/test', methods=['POST'])
 def test():
     accuracy = MODEL.test()
-    print(accuracy)
-    data = jsonify({ "accuracy" : accuracy})
+    print("Loss: {}, Accuracy: {}, Shuffle Loss: {}, Shuffle Accuracy: {}".format(accuracy[0],accuracy[1],accuracy[2],accuracy[3]))
+    data = jsonify({ "accuracy" : accuracy[1]})
     return data
 
 
