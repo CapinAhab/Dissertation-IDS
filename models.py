@@ -13,11 +13,20 @@ app = Flask(__name__)
 MODEL= None
 
 class LSTMModel:
-    def __init__(self, layers, neurones, data):
+    def __init__(self, layers, neurones, data, test_data):
 
         #No shuffle, LSTM can take sequence of a batch into account
-        self.X_train, self.X_test, self.Y_train, self.Y_test = train_test_split(data.drop(columns=["target"]), data["target"], test_size=0.2, shuffle=False, random_state=42)
+        #Just used to format data to the correct shape
+        self.X_train = data.drop(columns=["target"])
+        self.Y_train = data["target"]
 
+        self.X_test = test_data.drop(columns=["target"])
+        self.Y_test = test_data["target"]
+
+        shuffled_test_data = test_data.sample(frac=1).reset_index(drop=True)
+
+        self.X_test_shuffle = shuffled_test_data.drop(columns=["target"])
+        self.Y_test_shuffle = shuffled_test_data["target"]
 
         model = Sequential()
         for i in range(layers):
@@ -41,15 +50,29 @@ class LSTMModel:
 
     def test(self):
         loss, accuracy = self.model.evaluate(self.X_test, self.Y_test)
-        return accuracy
+        shuffle_loss, shuffle_accuracy = self.model.evaluate(self.X_test_shuffle, self.Y_test_shuffle)
+        return [loss, accuracy, shuffle_loss, shuffle_accuracy]
 
 
-def load_dataset():
+def load_dataset(malicious_location, web_location):
     #No specific column names, made from PCA
-    df = pd.read_csv('dataset/preprocess-test-network-attack.csv', header=None, names=['Column1', 'Column2', 'Column3', 'Column4'])
+    malicious_df = pd.read_csv(malicious_location, header=None, names=['Column1', 'Column2', 'Column3', 'Column4'])
 
     #All packets malicious assumed
-    df['target'] = 1
+    malicious_df['target'] = 1
+
+
+    standard_df = pd.read_csv(web_location, header=None, names=['Column1', 'Column2', 'Column3', 'Column4'])
+
+    standard_df['target'] = 0
+
+    #Make sure datasets are 50% malicious/non malicious traffic
+    if len(malicious_df) > len(standard_df):
+        malicious_df = malicious_df[:len(standard_df)]
+    else:
+        standard_df = standard_df[:len(malicious_df)]
+
+    df = pd.concat([malicious_df, standard_df])
 
     return df
 
@@ -57,9 +80,7 @@ def load_dataset():
 @app.route('/genmodel', methods=['POST'])
 def genmodel():
 
-    dataset = load_dataset()
-
-    lstm_model = LSTMModel(int(request.form['layers']), int(request.form['neurons']), dataset)
+    MODEL = LSTMModel(int(request.form['layers']), int(request.form['neurons']),load_dataset('dataset/preprocessed/preprocess-dataset-attack.csv', 'dataset/preprocessed/preprocess-test-network-standard-webtraffic.csv'),load_dataset('dataset/preprocessed/preprocess-test-network-attack.csv', 'dataset/preprocessed/preprocess-test-network-standard-webtraffic-validate.csv'))
 
     return "Data received successfully"
 
@@ -70,16 +91,16 @@ def train():
     return "Model trained successfully"
 
 
-@app.route('/test', methods=['GET'])
+@app.route('/test', methods=['POST'])
 def test():
     accuracy = MODEL.test()
-    print(accuracy)
-    data = jsonify({ "accuracy" : accuracy})
+    print("Loss: {}, Accuracy: {}, Shuffle Loss: {}, Shuffle Accuracy: {}".format(accuracy[0],accuracy[1],accuracy[2],accuracy[3]))
+    data = jsonify({ "accuracy" : accuracy[1]})
     return data
 
 
 
 if __name__ == "__main__":
-    MODEL = LSTMModel(3, 35, load_dataset())
+    MODEL = LSTMModel(3, 35, load_dataset('dataset/preprocessed/preprocess-dataset-attack.csv', 'dataset/preprocessed/preprocess-test-network-standard-webtraffic.csv'),load_dataset('dataset/preprocessed/preprocess-test-network-attack.csv', 'dataset/preprocessed/preprocess-test-network-standard-webtraffic-validate.csv'))
     #MODEL.train(500,4)
     app.run(debug=True)

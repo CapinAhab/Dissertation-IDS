@@ -48,7 +48,10 @@
     </form>
 
     <p id="accuracy">0%</p>
-    <button id="test_button">Test</button>
+    
+    <form id="test_button" action="http://127.0.0.1:5000/test" method="post">
+	<input type="submit" value="Test">
+    </form>
     <script src="/js/create-model-script.js"></script>
     <script src="/js/train-script.js"></script>
     <script src="/js/test-script.js"></script>
