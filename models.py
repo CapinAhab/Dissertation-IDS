@@ -79,8 +79,13 @@ def load_dataset(malicious_location, web_location):
 
 @app.route('/genmodel', methods=['POST'])
 def genmodel():
-
-    MODEL = LSTMModel(int(request.form['layers']), int(request.form['neurons']),load_dataset('dataset/preprocessed/preprocess-dataset-attack.csv', 'dataset/preprocessed/preprocess-test-network-standard-webtraffic.csv'),load_dataset('dataset/preprocessed/preprocess-test-network-attack.csv', 'dataset/preprocessed/preprocess-test-network-standard-webtraffic-validate.csv'))
+    form_data = request.form
+    for key, value in form_data.items():
+        print(f"Field: {key}, Value: {value}")
+    if request.form['premodel']:
+        MODEL = LSTMModel(int(request.form['layers']), int(request.form['neurons']),load_dataset('dataset/preprocessed/preprocess-dataset-attack.csv', 'dataset/preprocessed/preprocess-test-network-standard-webtraffic.csv'),load_dataset('dataset/preprocessed/preprocess-test-network-attack.csv', 'dataset/preprocessed/preprocess-test-network-standard-webtraffic-validate.csv'))
+    else:
+        MODEL = LSTMModel(int(request.form['layers']), int(request.form['neurons']),load_dataset('dataset/preprocessed/dataset-attack.csv', 'dataset/preprocessed/test-network-standard-webtraffic.csv'),load_dataset('dataset/preprocessed/test-network-attack.csv', 'dataset/preprocessed/test-network-standard-webtraffic-validate.csv'))
 
     return "Data received successfully"
 
