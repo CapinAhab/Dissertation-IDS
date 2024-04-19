@@ -47,8 +47,7 @@ fn preprocess(data: Array2<f64>) -> Array2<f64>{
     //need to scale first or NaN errors in PCA
     let scaler = NormScaler::l2();
     dataset = scaler.transform(dataset);
-    //Conv2d needs 4d tensor so shorten to 4 features
-    let embedding = Pca::params(4).fit(&dataset).unwrap();
+    let embedding = Pca::params(6).fit(&dataset).unwrap();
     dataset = embedding.transform(dataset);
     return dataset.records().to_owned();
 }
