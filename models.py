@@ -81,6 +81,11 @@ def load_dataset(malicious_location, web_location):
 
     return df
 
+@app.route('/livedata', methods=['POST'])
+def livedata():
+    print(request)
+    return 1
+
 
 @app.route('/genmodel', methods=['POST'])
 def genmodel():

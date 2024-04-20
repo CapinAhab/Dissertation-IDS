@@ -1,8 +1,8 @@
 #[macro_use] extern crate rocket;
 #[cfg(test)] mod tests;
 
-extern crate reqwest;
 
+use reqwest::Client;
 use rocket::fs::{FileServer, NamedFile, relative};
 use rocket_ws::WebSocket;
 use crate::rocket::futures::SinkExt;
@@ -61,10 +61,32 @@ async fn gettraffic(ws: WebSocket) -> rocket_ws::Channel<'static> {
         Box::pin(async move {
 	    println!("stream ok");
 	    let mut interface = monitor_network::NetworkHandler::new();
-	    while let Some(Ok(value)) = interface.get_many_packet_front_end(){
-		let message = Message::Text(serde_json::to_string(&value).expect("Failed to convert json"));
-		if let Err(err) = stream.send(message).await {
-                    eprintln!("Error sending message: {}", err);
+	    loop {
+		while let Some(Ok(value)) = interface.get_many_packet_front_end(){
+		    println!("{:?}", value.clone().to_array());
+		    /*
+		    let client = Client::new();
+
+		    // Send the request
+		    let response = client.post("127.0.0.1:5000/livedata")
+			.body(serde_json::to_string(&value.clone()).expect("Failed to serialize"))
+			.header(reqwest::header::CONTENT_TYPE, "application/json")
+			.send()
+			.await;
+		    match response{
+			Ok(value) =>{
+			    println!("{:?}", value)
+			}
+			Err(_e) => {
+			    println!("failed")
+			}
+		}
+		    */
+
+		    let message = Message::Text(serde_json::to_string(&value).expect("Failed to convert json"));
+		    if let Err(err) = stream.send(message).await {
+			eprintln!("Error sending message: {}", err);
+		    }
 		}
 	    }
             Ok(())

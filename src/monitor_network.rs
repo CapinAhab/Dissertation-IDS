@@ -2,6 +2,12 @@ use pcap::{Device, Capture};
 use etherparse::{SlicedPacket,TransportSlice};
 use serde::{Serialize, Deserialize};
 use ndarray::Array2;
+use pnet::datalink::{self, NetworkInterface};
+use pnet::datalink::Channel::Ethernet;
+use pnet::packet::Packet;
+use pnet::packet::ethernet::{EthernetPacket, MutableEthernetPacket};
+use pnet::datalink::Config;
+use pnet::datalink::Channel;
 
 //struct reprsenting packet data, simplified for the front end
 //inherits function that make it easy to convert to json
@@ -47,64 +53,43 @@ impl FrontEndPacketData {
     }
 }
 
-//Object that handles listening on the network
-pub struct NetworkHandler{
-    cap: Capture<pcap::Active>,
+pub struct NetworkHandler {
+    rx: Box<dyn datalink::DataLinkReceiver>,
 }
 
+impl NetworkHandler {
+    pub fn new() -> Self {
+        let interfaces = datalink::interfaces();
+        
+	let interface = interfaces.iter()
+	    .find(|iface| iface.name == "wlp4s0")
+	    .expect("Network interface 'wlp4s0' not found");
 
-//Iterates through available network devices and test for permission to access them
-pub fn test_network_permission() -> bool{
-    match Device::lookup() {
-        Ok(device) => {
-            match device.expect("Error").open(){
-		Ok(_) => return true,
-		Err(_e) => return false
-            }
-	}
-	Err(_e) => {
-	    return false
-	}
+	let mut config = datalink::Config::default();
+	    config.read_timeout = None;
+
+	let (tx, rx) = match datalink::channel(&interface, config) {
+            Ok(Channel::Ethernet(tx, rx)) => (tx, rx),
+            Ok(_) => panic!("Unhandled channel type"),
+            Err(e) => panic!("Failed to create datalink channel: {}", e),
+        };
+
+        NetworkHandler { rx }
     }
-}
-
-impl NetworkHandler{
-    //Constructor sets up background listener
-    pub fn new() -> Self{
-	//use default device as backup
-	let mut main_device = Device::lookup().unwrap().unwrap();
-	for device in pcap::Device::list().unwrap() {
-	    println!("{:?}", device.name);
-	    if device.name == "wlan0" || device.name ==  "wlp4s0"{
-		main_device = device;
-		break;
-	    }
-	}
-	NetworkHandler{
-	    cap: Capture::from_device(main_device).unwrap()
-		.promisc(true) //Needs to be in promiscuous mode to get all network traffic
-		.timeout(0)
-		.open().unwrap()
-	}
-    }
-
-    //Gets packets and returns simplified struct to front end
-    pub fn get_many_packet_front_end(&mut self) -> Option<Result<FrontEndPacketData, bool>>{
-	while let Ok(packet) = self.cap.next_packet(){
-	    let frame = packet.to_vec();
-	    match process_packet(frame){
-		Err(value) => {
-		    return Some(Err(value))
-		}
-		Ok(value) => {
-		    return Some(Ok(value))
+    pub fn get_many_packet_front_end(&mut self) -> Option<Result<FrontEndPacketData, bool>> {
+	match self.rx.next() {
+	    Ok(packet) => {
+		// Process the received packet
+		let frame = EthernetPacket::new(packet).unwrap();
+		match process_packet(frame.packet().to_vec()) {
+		    Err(value) => return Some(Err(value)),
+		    Ok(value) => return Some(Ok(value)),
 		}
 	    }
+	    Err(_) => return None,
 	}
-	None
     }
 }
-
 
 
 pub fn get_train_packets(file_loc: String) -> Vec<FrontEndPacketData>{
@@ -167,4 +152,24 @@ fn process_packet(frame :Vec<u8>) -> Result<FrontEndPacketData, bool>{
 	    }
 	}
     }
+}
+//Iterates through available network devices and test for permission to access them
+pub fn test_network_permission() -> bool {
+    let interfaces = datalink::interfaces();
+
+    // Choose the network interface you want to capture packets on
+    let interface = interfaces.iter()
+        .find(|iface| iface.is_up() && !iface.is_loopback())
+        .expect("No usable network interface found");
+
+    // Create a new packet capture handle for the selected interface
+    let mut config = datalink::Config::default();
+    config.read_timeout = None; // Set timeout duration to None for infinite timeout
+   match datalink::channel(&interface, config) {
+        Ok(Ethernet(_tx, _rx)) => return true,
+        Ok(_) => return false,
+        Err(_e) => return false,
+    };
+    
+
 }
