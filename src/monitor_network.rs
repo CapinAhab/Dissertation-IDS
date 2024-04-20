@@ -20,25 +20,29 @@ pub struct FrontEndPacketData{
     rst_flag: bool,
     psh_flag: bool,
     urg_flag: bool,
-    header_len: usize
+    header_len: usize,
+    window_size: u16,
+    tcp_len: usize
+ 
 }
 
 impl FrontEndPacketData {
+    //Creates array of data to match dataset, not all data required for accurate prediction
     pub fn to_array(&self) -> Array2<f64> {
-        Array2::from_shape_vec((1,1),
+        Array2::from_shape_vec((1,12),
             vec![
-                self.protocole as f64,
                 self.source_port as f64,
                 self.destination_port as f64,
                 self.sequence_number as f64,
                 self.acknowledgment_number as f64,
+                self.fin_flag as u8 as f64,
                 self.syn_flag as u8 as f64,
                 self.ack_flag as u8 as f64,
-                self.fin_flag as u8 as f64,
-                self.rst_flag as u8 as f64,
                 self.psh_flag as u8 as f64,
                 self.urg_flag as u8 as f64,
+		self.window_size as f64,
                 self.header_len as f64,
+		self.tcp_len as f64
         ]).expect("REASON")
     }
 }
@@ -147,7 +151,10 @@ fn process_packet(frame :Vec<u8>) -> Result<FrontEndPacketData, bool>{
 			    rst_flag: tcp_slice.rst(),
 			    psh_flag: tcp_slice.psh(),
 			    urg_flag: tcp_slice.urg(),
-			    header_len: tcp_slice.header_len()
+			    header_len: tcp_slice.header_len(),
+			    window_size: tcp_slice.window_size(),
+			    tcp_len: tcp_slice.payload().len()
+
 			};
 
 			return Ok(packet)

@@ -6,8 +6,8 @@ var networkGraph = new Chart(ctx, {
     data: {
         labels: Array.from({length: 61}, (_, i) => i), // generates an array [0, 1, 2, ..., 60]
         datasets: [{
-            label: '# of Pings',
-            data: [/* Your data array goes here */],
+            label: '# TCP packets on the network',
+            data: Array(61).fill(0), // Initialize with zeros
             backgroundColor: 'rgba(255, 99, 132, 0.2)',
             borderColor: 'rgba(255, 99, 132, 1)',
             borderWidth: 1
@@ -33,27 +33,15 @@ setInterval(() => {
 
 // WebSocket onmessage event
 socket.addEventListener('message', (event) => {
+    // Now, jsonObject is a JavaScript object
+    console.log('Message from server:', event.data);
+
     // Update chart data
     networkGraph.data.datasets[0].data.push(1);
     networkGraph.data.datasets[0].data.shift();
     
     // Update the chart
     networkGraph.update();
-    // Now, jsonObject is a JavaScript object
-    console.log(jsonObject);
-    console.log('Message from server:', message);
-
-    //Update graph
-
-
-    // Increment ping count
-    pingCount++;
-
-    // Update chart
-    pingChart.data.labels.push(new Date());
-    pingChart.data.datasets[0].data.push(pingCount);
-    pingChart.update();
-
 });
 
 // Event handler for when an error occurs
@@ -65,4 +53,3 @@ socket.addEventListener('error', (event) => {
 socket.addEventListener('close', (event) => {
     console.log('WebSocket connection closed:', event);
 });
-

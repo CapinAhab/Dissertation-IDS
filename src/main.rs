@@ -13,6 +13,8 @@ use lazy_static::lazy_static;
 use std::sync::Mutex;
 use rocket::serde::json::Json;
 use std::fs;
+use rocket::tokio::task;
+use rocket::response::Debug;
 
 mod monitor_network;
 mod deep_learn;
@@ -60,7 +62,6 @@ async fn gettraffic(ws: WebSocket) -> rocket_ws::Channel<'static> {
 	    println!("stream ok");
 	    let mut interface = monitor_network::NetworkHandler::new();
 	    while let Some(Ok(value)) = interface.get_many_packet_front_end(){
-		//println!("{:?}", preprocess::preprocess(value.clone().to_array()));
 		let message = Message::Text(serde_json::to_string(&value).expect("Failed to convert json"));
 		if let Err(err) = stream.send(message).await {
                     eprintln!("Error sending message: {}", err);
