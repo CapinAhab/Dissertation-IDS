@@ -1,0 +1,13 @@
+FROM python:3.8
+
+ENV PYTHONUNBUFFERED 1
+
+WORKDIR /app
+
+COPY . /app
+
+RUN pip install --no-cache-dir tensorflow flask requests scikit-learn pandas
+
+EXPOSE 5000
+
+CMD ["python", "models.py"]

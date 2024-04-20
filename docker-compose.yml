@@ -1,0 +1,12 @@
+services:
+  ids:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    network_mode: "host"
+
+  models:
+    build:
+      context: .
+      dockerfile: Dockerfile-python
+    network_mode: "host"
