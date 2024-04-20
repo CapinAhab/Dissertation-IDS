@@ -53,6 +53,11 @@ class LSTMModel:
         shuffle_loss, shuffle_accuracy = self.model.evaluate(self.X_test_shuffle, self.Y_test_shuffle)
         return [loss, accuracy, shuffle_loss, shuffle_accuracy]
 
+    def classify(self, data):
+        prediction = self.model.predict(data)
+        return prediction[0][0]
+        
+
 
 def load_dataset(malicious_location, web_location):
     #No specific column names, made from PCA

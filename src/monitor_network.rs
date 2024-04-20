@@ -1,11 +1,11 @@
 use pcap::{Device, Capture};
 use etherparse::{SlicedPacket,TransportSlice};
 use serde::{Serialize, Deserialize};
+use ndarray::Array2;
 
 //struct reprsenting packet data, simplified for the front end
 //inherits function that make it easy to convert to json
-#[derive(Debug)]
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct FrontEndPacketData{
     source: [u8; 6],
     destination: [u8; 6],
@@ -21,7 +21,26 @@ pub struct FrontEndPacketData{
     psh_flag: bool,
     urg_flag: bool,
     header_len: usize
-    
+}
+
+impl FrontEndPacketData {
+    pub fn to_array(&self) -> Array2<f64> {
+        Array2::from_shape_vec((1,1),
+            vec![
+                self.protocole as f64,
+                self.source_port as f64,
+                self.destination_port as f64,
+                self.sequence_number as f64,
+                self.acknowledgment_number as f64,
+                self.syn_flag as u8 as f64,
+                self.ack_flag as u8 as f64,
+                self.fin_flag as u8 as f64,
+                self.rst_flag as u8 as f64,
+                self.psh_flag as u8 as f64,
+                self.urg_flag as u8 as f64,
+                self.header_len as f64,
+        ]).expect("REASON")
+    }
 }
 
 //Object that handles listening on the network
@@ -48,10 +67,19 @@ pub fn test_network_permission() -> bool{
 impl NetworkHandler{
     //Constructor sets up background listener
     pub fn new() -> Self{
-	let main_device = Device::lookup().unwrap().unwrap();
+	//use default device as backup
+	let mut main_device = Device::lookup().unwrap().unwrap();
+	for device in pcap::Device::list().unwrap() {
+	    println!("{:?}", device.name);
+	    if device.name == "wlan0" || device.name ==  "wlp4s0"{
+		main_device = device;
+		break;
+	    }
+	}
 	NetworkHandler{
 	    cap: Capture::from_device(main_device).unwrap()
 		.promisc(true) //Needs to be in promiscuous mode to get all network traffic
+		.timeout(0)
 		.open().unwrap()
 	}
     }

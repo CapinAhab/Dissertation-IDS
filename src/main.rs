@@ -1,6 +1,8 @@
 #[macro_use] extern crate rocket;
 #[cfg(test)] mod tests;
 
+extern crate reqwest;
+
 use rocket::fs::{FileServer, NamedFile, relative};
 use rocket_ws::WebSocket;
 use crate::rocket::futures::SinkExt;
@@ -55,8 +57,10 @@ mod manual {
 async fn gettraffic(ws: WebSocket) -> rocket_ws::Channel<'static> {
     ws.channel(move |mut stream| {
         Box::pin(async move {
+	    println!("stream ok");
 	    let mut interface = monitor_network::NetworkHandler::new();
 	    while let Some(Ok(value)) = interface.get_many_packet_front_end(){
+		//println!("{:?}", preprocess::preprocess(value.clone().to_array()));
 		let message = Message::Text(serde_json::to_string(&value).expect("Failed to convert json"));
 		if let Err(err) = stream.send(message).await {
                     eprintln!("Error sending message: {}", err);
@@ -151,13 +155,14 @@ async fn preprocessdata(){
 }
 
 
-
+/*
 #[post("/genmodel", data = "<model_data>")]
 async fn genmodel(model_data: Form<ModelPerameters>){
     let mut trained = MODEL_TRAINED.lock().unwrap();
     *trained = false;
     deep_learn::gen_net(model_data.layers, model_data.neurons, model_data.lstm_model);
 }
+*/
 
 //Use launch rather than main for async functionality
 #[launch]
@@ -171,7 +176,7 @@ fn rocket() -> _ {
 	.mount("/", routes![testmodel])
 	.mount("/", routes![trainmodel])
 	.mount("/", routes![preprocessdata])
-	.mount("/", routes![genmodel])
+//	.mount("/", routes![genmodel])
 	.mount("/", routes![modelinfo])
         .mount("/", routes![manual::file_path])
 	.mount("/", FileServer::from(relative!("static")))

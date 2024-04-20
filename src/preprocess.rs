@@ -1,5 +1,5 @@
 use std::fs::File;
-use ndarray::{Array2};
+use ndarray::Array2;
 use ndarray_csv::ReadError;
 use linfa::Dataset;
 use linfa_reduction::Pca;
@@ -8,8 +8,6 @@ use csv::Writer;
 use std::error::Error;
 use ndarray::Axis;
 use linfa_preprocessing::norm_scaling::NormScaler;
-
-//mod monitor_network;
 
 
 /*
@@ -35,6 +33,9 @@ pub fn generate_tensor_from_data(data: monitor_network::FrontEndPacketData, B: B
 }
  */
 
+
+
+
 //loads CSV as dataframe that can be preprocessed
 fn load_csv(file_path: &str) -> Result<Array2<f64>, ReadError>{
     let file = File::open(file_path).unwrap();
@@ -42,7 +43,7 @@ fn load_csv(file_path: &str) -> Result<Array2<f64>, ReadError>{
 }
 
 //Applies PCA to reduce dimentionality
-fn preprocess(data: Array2<f64>) -> Array2<f64>{
+pub fn preprocess(data: Array2<f64>) -> Array2<f64>{
     let mut dataset = Dataset::from(data);
     //need to scale first or NaN errors in PCA
     let scaler = NormScaler::l2();
