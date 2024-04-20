@@ -1,7 +1,7 @@
 import numpy as np
 import requests
 import pandas as pd
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, abort
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import MinMaxScaler
 from tensorflow.keras.models import Sequential
@@ -9,8 +9,7 @@ from tensorflow.keras.layers import LSTM, Dense
 
 app = Flask(__name__)
 
-#empty variable, holds default model, can be changed by user
-MODEL= None
+Model = None
 
 class LSTMModel:
     def __init__(self, layers, neurones, data, test_data):
@@ -91,8 +90,10 @@ def livedata():
     packet_json=request.get_json()
     data = [[packet_json["source_port"], packet_json["destination_port"], packet_json["sequence_number"], packet_json["acknowledgment_number"], packet_json["fin_flag"], packet_json["syn_flag"], packet_json["ack_flag"], packet_json["psh_flag"], packet_json["urg_flag"], packet_json["window_size"], packet_json["header_len"], packet_json["tcp_len"]]]
     test = MODEL.classify(data)
-    return jsonify({"result": True})
-
+    if round(test) >= 1:
+        return jsonify({"result": True})
+    else:
+        abort(400)
 
 @app.route('/genmodel', methods=['POST'])
 def genmodel():
@@ -124,5 +125,5 @@ def test():
 
 if __name__ == "__main__":
     MODEL = LSTMModel(3, 10,load_dataset('dataset/preprocessed/dataset-attack.csv', 'dataset/preprocessed/test-network-standard-webtraffic.csv', False),load_dataset('dataset/preprocessed/test-network-attack.csv', 'dataset/preprocessed/test-network-standard-webtraffic-validate.csv', False))
-    MODEL.train(50,1)
+    MODEL.train(1,1)
     app.run(debug=True)

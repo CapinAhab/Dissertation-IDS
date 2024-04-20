@@ -8,8 +8,6 @@ use crate::rocket::futures::SinkExt;
 use rocket_ws::Message;
 use rocket::form::Form;
 use std::path::Path;
-use lazy_static::lazy_static;
-use std::sync::Mutex;
 use rocket::serde::json::Json;
 use std::fs;
 use rocket::tokio::task;
@@ -55,7 +53,7 @@ async fn gettraffic(ws: WebSocket) -> rocket_ws::Channel<'static> {
 	    println!("stream ok");
 	    let mut interface = monitor_network::NetworkHandler::new();
 	    loop {
-		while let Some(Ok(value)) = interface.get_many_packet_front_end(){
+		while let Some(Ok(mut value)) = interface.get_many_packet_front_end(){
 		    //println!("{:?}", value.clone().to_array());
 
 		    let client = Client::new();
@@ -67,13 +65,17 @@ async fn gettraffic(ws: WebSocket) -> rocket_ws::Channel<'static> {
 			.send()
 			.await;
 		    match response{
-			Ok(value) =>{
-			    println!("{:?}", value)
+			Ok(response) =>{
+			    if response.status().is_success() {
+				&value.set_malicious(false);
+			    } else {
+				&value.set_malicious(true);
+			    }
 			}
 			Err(e) => {
 			    println!("failed {:?}",e)
 			}
-		}
+		    }
 
 		    let message = Message::Text(serde_json::to_string(&value).expect("Failed to convert json"));
 		    if let Err(err) = stream.send(message).await {

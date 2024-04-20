@@ -27,7 +27,8 @@ pub struct FrontEndPacketData{
     urg_flag: bool,
     header_len: usize,
     window_size: u16,
-    tcp_len: usize
+    tcp_len: usize,
+    malicious: bool
  
 }
 
@@ -49,6 +50,10 @@ impl FrontEndPacketData {
                 self.header_len as f64,
 		self.tcp_len as f64
         ]).expect("REASON")
+    }
+
+    pub fn set_malicious(&mut self, value: bool){
+	self.malicious=value;
     }
 }
 
@@ -137,7 +142,8 @@ fn process_packet(frame :Vec<u8>) -> Result<FrontEndPacketData, bool>{
 			    urg_flag: tcp_slice.urg(),
 			    header_len: tcp_slice.header_len(),
 			    window_size: tcp_slice.window_size(),
-			    tcp_len: tcp_slice.payload().len()
+			    tcp_len: tcp_slice.payload().len(),
+			    malicious: false
 
 			};
 
