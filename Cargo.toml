@@ -6,10 +6,8 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-burn = {version="0.12.1", features=["train", "wgpu"]}
 etherparse = "0.14.2"
 lazy_static = "1.4.0"
-pcap = "1.2.0"
 rocket = {version="0.5.0", features=["json"]}
 rocket_ws = "0.1.0"
 serde = "1.0.197"

@@ -1,7 +1,6 @@
 #[macro_use] extern crate rocket;
 #[cfg(test)] mod tests;
 
-
 use reqwest::Client;
 use rocket::fs::{FileServer, NamedFile, relative};
 use rocket_ws::WebSocket;
@@ -20,14 +19,7 @@ mod monitor_network;
 mod deep_learn;
 mod preprocess;
 
-
-//Global variables, probably no race conditions due to lock
-lazy_static! {
-    static ref MODEL_TRAINED: Mutex<bool> = Mutex::new(true);
-    //static ref MODEL: Mutex<deep_learn::CNNModel<Wgpu>> = Mutex::new(deep_learn::gen_net(10,10,false));
-}
-
-
+/*
 //Form input for model parameters
 #[derive(Debug, FromForm)]
 struct ModelPerameters{
@@ -35,6 +27,7 @@ struct ModelPerameters{
     layers: i64,
     neurons: i64
 }
+*/
 
 
 //Sets up static file paths
@@ -63,12 +56,12 @@ async fn gettraffic(ws: WebSocket) -> rocket_ws::Channel<'static> {
 	    let mut interface = monitor_network::NetworkHandler::new();
 	    loop {
 		while let Some(Ok(value)) = interface.get_many_packet_front_end(){
-		    println!("{:?}", value.clone().to_array());
-		    /*
+		    //println!("{:?}", value.clone().to_array());
+
 		    let client = Client::new();
 
 		    // Send the request
-		    let response = client.post("127.0.0.1:5000/livedata")
+		    let response = client.post("http://127.0.0.1:5000/livedata")
 			.body(serde_json::to_string(&value.clone()).expect("Failed to serialize"))
 			.header(reqwest::header::CONTENT_TYPE, "application/json")
 			.send()
@@ -77,11 +70,10 @@ async fn gettraffic(ws: WebSocket) -> rocket_ws::Channel<'static> {
 			Ok(value) =>{
 			    println!("{:?}", value)
 			}
-			Err(_e) => {
-			    println!("failed")
+			Err(e) => {
+			    println!("failed {:?}",e)
 			}
 		}
-		    */
 
 		    let message = Message::Text(serde_json::to_string(&value).expect("Failed to convert json"));
 		    if let Err(err) = stream.send(message).await {
@@ -109,26 +101,6 @@ async fn index() -> Option<NamedFile> {
 #[get("/dataset")]
 async fn dataset() -> Option<NamedFile> {
     NamedFile::open("pages/data.html").await.ok()
-}
-
-//Trains current model and returns true if successful
-#[get("/trainmodel")]
-async fn trainmodel() -> Json<bool>{
-    let mut trained = MODEL_TRAINED.lock().unwrap();
-    *trained = true;
-    let test_var=true;
-    
-    Json(test_var)
-}
-
-//gets and returns model accuracy percent
-#[get("/testmodel")]
-async fn testmodel() -> Json<i64>{
-    let _test_data_dataset = monitor_network::get_train_packets("dataset/pcap/UCAP172.31.69.25".to_string());
-    let _test_data_malicious_synthetic = monitor_network::get_train_packets("dataset/test-network-attack.pcap".to_string());
-    let _test_data_malicious_synthetic = monitor_network::get_train_packets("dataset/test-network-standard.pcap".to_string());
-    let accuracy = 80;
-    Json(accuracy)
 }
 
 //Options to train and tweak models
@@ -196,8 +168,6 @@ fn rocket() -> _ {
 	.mount("/", routes![dataset])
 	.mount("/", routes![train])
 	.mount("/", routes![test_page])
-	.mount("/", routes![testmodel])
-	.mount("/", routes![trainmodel])
 	.mount("/", routes![preprocessdata])
 //	.mount("/", routes![genmodel])
 	.mount("/", routes![modelinfo])

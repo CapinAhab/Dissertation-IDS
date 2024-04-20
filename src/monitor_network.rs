@@ -1,4 +1,3 @@
-use pcap::{Device, Capture};
 use etherparse::{SlicedPacket,TransportSlice};
 use serde::{Serialize, Deserialize};
 use ndarray::Array2;
@@ -91,7 +90,7 @@ impl NetworkHandler {
     }
 }
 
-
+/*
 pub fn get_train_packets(file_loc: String) -> Vec<FrontEndPacketData>{
     let mut cap = Capture::from_file(file_loc).unwrap();
 
@@ -111,7 +110,7 @@ pub fn get_train_packets(file_loc: String) -> Vec<FrontEndPacketData>{
 
     return captures
 }
-
+*/
 fn process_packet(frame :Vec<u8>) -> Result<FrontEndPacketData, bool>{ 
     match SlicedPacket::from_ethernet(&frame) {
 	Err(value) => {
