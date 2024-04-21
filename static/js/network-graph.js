@@ -1,5 +1,8 @@
 const socket = new WebSocket("ws://127.0.0.1:8000/gettraffic");
 
+var totalPackets = 0;
+var maliciousPackets = 0;
+
 var ctx = document.getElementById('networkGraph').getContext('2d');
 var networkGraph = new Chart(ctx, {
     type: 'line', // or 'bar' if you prefer a bar chart
@@ -38,6 +41,7 @@ socket.addEventListener('message', (event) => {
 
     const jsonObject = JSON.parse(event.data);
     if (jsonObject.malicious) {
+	maliciousPackets++;
 	console.log("Malicious")
         // Create a <p> element
         const paragraph = document.createElement('p');
@@ -50,6 +54,16 @@ socket.addEventListener('message', (event) => {
         maliciousDiv.appendChild(paragraph);
     }
 
+    totalPackets++;
+    
+    // Update total pings count in <p> element
+    const totalPacketsParagraph = document.getElementById('total-pings');
+    totalPacketsParagraph.textContent = `Total pings: ${totalPackets}`;
+
+    // Update malicious pings count in <p> element
+    const maliciousPacketsParagraph = document.getElementById('malicious-pings');
+    maliciousPacketsParagraph.textContent = `Malicious pings: ${maliciousPings}`;
+    
     // Update chart data
     networkGraph.data.datasets[0].data.push(1);
     networkGraph.data.datasets[0].data.shift();
