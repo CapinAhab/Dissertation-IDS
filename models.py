@@ -54,6 +54,7 @@ class LSTMModel:
 
     def classify(self, data):
         prediction = self.model.predict(data)
+        print(prediction)
         return prediction[0][0]
         
 
@@ -93,7 +94,7 @@ def livedata():
     if round(test) >= 1:
         return jsonify({"result": True})
     else:
-        abort(400)
+        return jsonify({"result": False})
 
 @app.route('/genmodel', methods=['POST'])
 def genmodel():

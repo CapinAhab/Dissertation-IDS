@@ -54,7 +54,6 @@ async fn gettraffic(ws: WebSocket) -> rocket_ws::Channel<'static> {
 	    let mut interface = monitor_network::NetworkHandler::new();
 	    loop {
 		while let Some(Ok(mut value)) = interface.get_many_packet_front_end(){
-		    //println!("{:?}", value.clone().to_array());
 
 		    let client = Client::new();
 
@@ -66,8 +65,13 @@ async fn gettraffic(ws: WebSocket) -> rocket_ws::Channel<'static> {
 			.await;
 		    match response{
 			Ok(response) =>{
-			    if response.status().is_success() {
-				&value.set_malicious(false);
+			    if let Ok(json) = response.json::<serde_json::Value>().await{
+				if let Some(true) = json.get("your_json_key_here").and_then(|v | v.as_bool()) {
+				    &value.set_malicious(true);
+				}
+				else{
+				    &value.set_malicious(false);
+				}
 			    } else {
 				&value.set_malicious(true);
 			    }
