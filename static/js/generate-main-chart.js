@@ -10,6 +10,18 @@ socket.addEventListener('message', (event) => {
     console.log(jsonObject);
     console.log('Message from server:', message);
 
+    if (jsonObject.malicious) {
+	console.log("Malicious")
+        // Create a <p> element
+        const paragraph = document.createElement('p');
+        // Set the text of the <p> element
+        paragraph.textContent = `Potentially malicious packet from: ${jsonObject.sender}`;
+        
+        // Get the <div> element with id "malicious-div"
+        const maliciousDiv = document.getElementById('malicious-div');
+        // Append the <p> element to the <div>
+        maliciousDiv.appendChild(paragraph);
+    }
     //Update graph
 
 });

@@ -1,11 +1,16 @@
-use pcap::{Device, Capture};
 use etherparse::{SlicedPacket,TransportSlice};
 use serde::{Serialize, Deserialize};
+use ndarray::Array2;
+use pnet::datalink::{self, NetworkInterface};
+use pnet::datalink::Channel::Ethernet;
+use pnet::packet::Packet;
+use pnet::packet::ethernet::{EthernetPacket, MutableEthernetPacket};
+use pnet::datalink::Config;
+use pnet::datalink::Channel;
 
 //struct reprsenting packet data, simplified for the front end
 //inherits function that make it easy to convert to json
-#[derive(Debug)]
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct FrontEndPacketData{
     source: [u8; 6],
     destination: [u8; 6],
@@ -20,61 +25,77 @@ pub struct FrontEndPacketData{
     rst_flag: bool,
     psh_flag: bool,
     urg_flag: bool,
-    header_len: usize
-    
+    header_len: usize,
+    window_size: u16,
+    tcp_len: usize,
+    malicious: bool
+ 
 }
 
-//Object that handles listening on the network
-pub struct NetworkHandler{
-    cap: Capture<pcap::Active>,
-}
+impl FrontEndPacketData {
+    //Creates array of data to match dataset, not all data required for accurate prediction
+    pub fn to_array(&self) -> Array2<f64> {
+        Array2::from_shape_vec((1,12),
+            vec![
+                self.source_port as f64,
+                self.destination_port as f64,
+                self.sequence_number as f64,
+                self.acknowledgment_number as f64,
+                self.fin_flag as u8 as f64,
+                self.syn_flag as u8 as f64,
+                self.ack_flag as u8 as f64,
+                self.psh_flag as u8 as f64,
+                self.urg_flag as u8 as f64,
+		self.window_size as f64,
+                self.header_len as f64,
+		self.tcp_len as f64
+        ]).expect("REASON")
+    }
 
-
-//Iterates through available network devices and test for permission to access them
-pub fn test_network_permission() -> bool{
-    match Device::lookup() {
-        Ok(device) => {
-            match device.expect("Error").open(){
-		Ok(_) => return true,
-		Err(_e) => return false
-            }
-	}
-	Err(_e) => {
-	    return false
-	}
+    pub fn set_malicious(&mut self, value: bool){
+	self.malicious=value;
     }
 }
 
-impl NetworkHandler{
-    //Constructor sets up background listener
-    pub fn new() -> Self{
-	let main_device = Device::lookup().unwrap().unwrap();
-	NetworkHandler{
-	    cap: Capture::from_device(main_device).unwrap()
-		.promisc(true) //Needs to be in promiscuous mode to get all network traffic
-		.open().unwrap()
-	}
-    }
+pub struct NetworkHandler {
+    rx: Box<dyn datalink::DataLinkReceiver>,
+}
 
-    //Gets packets and returns simplified struct to front end
-    pub fn get_many_packet_front_end(&mut self) -> Option<Result<FrontEndPacketData, bool>>{
-	while let Ok(packet) = self.cap.next_packet(){
-	    let frame = packet.to_vec();
-	    match process_packet(frame){
-		Err(value) => {
-		    return Some(Err(value))
-		}
-		Ok(value) => {
-		    return Some(Ok(value))
+impl NetworkHandler {
+    pub fn new() -> Self {
+        let interfaces = datalink::interfaces();
+        
+	let interface = interfaces.iter()
+	    .find(|iface| iface.name == "wlp4s0")
+	    .expect("Network interface 'wlp4s0' not found");
+
+	let mut config = datalink::Config::default();
+	    config.read_timeout = None;
+
+	let (tx, rx) = match datalink::channel(&interface, config) {
+            Ok(Channel::Ethernet(tx, rx)) => (tx, rx),
+            Ok(_) => panic!("Unhandled channel type"),
+            Err(e) => panic!("Failed to create datalink channel: {}", e),
+        };
+
+        NetworkHandler { rx }
+    }
+    pub fn get_many_packet_front_end(&mut self) -> Option<Result<FrontEndPacketData, bool>> {
+	match self.rx.next() {
+	    Ok(packet) => {
+		// Process the received packet
+		let frame = EthernetPacket::new(packet).unwrap();
+		match process_packet(frame.packet().to_vec()) {
+		    Err(value) => return Some(Err(value)),
+		    Ok(value) => return Some(Ok(value)),
 		}
 	    }
+	    Err(_) => return None,
 	}
-	None
     }
 }
 
-
-
+/*
 pub fn get_train_packets(file_loc: String) -> Vec<FrontEndPacketData>{
     let mut cap = Capture::from_file(file_loc).unwrap();
 
@@ -94,7 +115,7 @@ pub fn get_train_packets(file_loc: String) -> Vec<FrontEndPacketData>{
 
     return captures
 }
-
+*/
 fn process_packet(frame :Vec<u8>) -> Result<FrontEndPacketData, bool>{ 
     match SlicedPacket::from_ethernet(&frame) {
 	Err(value) => {
@@ -119,7 +140,11 @@ fn process_packet(frame :Vec<u8>) -> Result<FrontEndPacketData, bool>{
 			    rst_flag: tcp_slice.rst(),
 			    psh_flag: tcp_slice.psh(),
 			    urg_flag: tcp_slice.urg(),
-			    header_len: tcp_slice.header_len()
+			    header_len: tcp_slice.header_len(),
+			    window_size: tcp_slice.window_size(),
+			    tcp_len: tcp_slice.payload().len(),
+			    malicious: false
+
 			};
 
 			return Ok(packet)
@@ -132,4 +157,24 @@ fn process_packet(frame :Vec<u8>) -> Result<FrontEndPacketData, bool>{
 	    }
 	}
     }
+}
+//Iterates through available network devices and test for permission to access them
+pub fn test_network_permission() -> bool {
+    let interfaces = datalink::interfaces();
+
+    // Choose the network interface you want to capture packets on
+    let interface = interfaces.iter()
+        .find(|iface| iface.is_up() && !iface.is_loopback())
+        .expect("No usable network interface found");
+
+    // Create a new packet capture handle for the selected interface
+    let mut config = datalink::Config::default();
+    config.read_timeout = None; // Set timeout duration to None for infinite timeout
+   match datalink::channel(&interface, config) {
+        Ok(Ethernet(_tx, _rx)) => return true,
+        Ok(_) => return false,
+        Err(_e) => return false,
+    };
+    
+
 }

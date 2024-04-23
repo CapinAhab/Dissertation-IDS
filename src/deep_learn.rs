@@ -1,3 +1,4 @@
+/*
 use burn::{
     config::Config,
     module::Module,
@@ -79,3 +80,4 @@ pub fn gen_net(layers: i64, neurons: i64, lstm_model: bool) -> CNNModel<Wgpu>{
 
     return cnn_model
 }
+*/

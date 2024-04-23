@@ -1,7 +1,7 @@
 import numpy as np
 import requests
 import pandas as pd
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, abort
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import MinMaxScaler
 from tensorflow.keras.models import Sequential
@@ -9,8 +9,7 @@ from tensorflow.keras.layers import LSTM, Dense
 
 app = Flask(__name__)
 
-#empty variable, holds default model, can be changed by user
-MODEL= None
+Model = None
 
 class LSTMModel:
     def __init__(self, layers, neurones, data, test_data):
@@ -53,18 +52,27 @@ class LSTMModel:
         shuffle_loss, shuffle_accuracy = self.model.evaluate(self.X_test_shuffle, self.Y_test_shuffle)
         return [loss, accuracy, shuffle_loss, shuffle_accuracy]
 
+    def classify(self, data):
+        prediction = self.model.predict(data)
+        return prediction[0][0]
+        
 
-def load_dataset(malicious_location, web_location):
+
+def load_dataset(malicious_location, web_location, preprocesssed):
     #No specific column names, made from PCA
-    malicious_df = pd.read_csv(malicious_location, header=None, names=['Column1', 'Column2', 'Column3', 'Column4'])
+    if preprocesssed:
+        malicious_df = pd.read_csv(malicious_location, header=None, names=['Column1', 'Column2', 'Column3', 'Column4'])
+        standard_df = pd.read_csv(web_location, header=None, names=['Column1', 'Column2', 'Column3', 'Column4'])
+
+    else:
+        malicious_df = pd.read_csv(malicious_location, header=0)
+        standard_df = pd.read_csv(web_location, header=0)
+
+    standard_df['target'] = 0
 
     #All packets malicious assumed
     malicious_df['target'] = 1
 
-
-    standard_df = pd.read_csv(web_location, header=None, names=['Column1', 'Column2', 'Column3', 'Column4'])
-
-    standard_df['target'] = 0
 
     #Make sure datasets are 50% malicious/non malicious traffic
     if len(malicious_df) > len(standard_df):
@@ -76,6 +84,16 @@ def load_dataset(malicious_location, web_location):
 
     return df
 
+@app.route('/livedata', methods=['POST'])
+def livedata():
+    print(request.get_json())
+    packet_json=request.get_json()
+    data = [[packet_json["source_port"], packet_json["destination_port"], packet_json["sequence_number"], packet_json["acknowledgment_number"], packet_json["fin_flag"], packet_json["syn_flag"], packet_json["ack_flag"], packet_json["psh_flag"], packet_json["urg_flag"], packet_json["window_size"], packet_json["header_len"], packet_json["tcp_len"]]]
+    test = MODEL.classify(data)
+    if round(test) >= 1:
+        return jsonify({"result": True})
+    else:
+        abort(400)
 
 @app.route('/genmodel', methods=['POST'])
 def genmodel():
@@ -83,9 +101,9 @@ def genmodel():
     for key, value in form_data.items():
         print(f"Field: {key}, Value: {value}")
     if request.form['premodel']:
-        MODEL = LSTMModel(int(request.form['layers']), int(request.form['neurons']),load_dataset('dataset/preprocessed/preprocess-dataset-attack.csv', 'dataset/preprocessed/preprocess-test-network-standard-webtraffic.csv'),load_dataset('dataset/preprocessed/preprocess-test-network-attack.csv', 'dataset/preprocessed/preprocess-test-network-standard-webtraffic-validate.csv'))
+        MODEL = LSTMModel(int(request.form['layers']), int(request.form['neurons']),load_dataset('dataset/preprocessed/preprocess-dataset-attack.csv', 'dataset/preprocessed/preprocess-test-network-standard-webtraffic.csv', True),load_dataset('dataset/preprocessed/preprocess-test-network-attack.csv', 'dataset/preprocessed/preprocess-test-network-standard-webtraffic-validate.csv', True))
     else:
-        MODEL = LSTMModel(int(request.form['layers']), int(request.form['neurons']),load_dataset('dataset/preprocessed/dataset-attack.csv', 'dataset/preprocessed/test-network-standard-webtraffic.csv'),load_dataset('dataset/preprocessed/test-network-attack.csv', 'dataset/preprocessed/test-network-standard-webtraffic-validate.csv'))
+        MODEL = LSTMModel(int(request.form['layers']), int(request.form['neurons']),load_dataset('dataset/preprocessed/dataset-attack.csv', 'dataset/preprocessed/test-network-standard-webtraffic.csv', False),load_dataset('dataset/preprocessed/test-network-attack.csv', 'dataset/preprocessed/test-network-standard-webtraffic-validate.csv', False))
 
     return "Data received successfully"
 
@@ -106,6 +124,6 @@ def test():
 
 
 if __name__ == "__main__":
-    MODEL = LSTMModel(3, 35, load_dataset('dataset/preprocessed/preprocess-dataset-attack.csv', 'dataset/preprocessed/preprocess-test-network-standard-webtraffic.csv'),load_dataset('dataset/preprocessed/preprocess-test-network-attack.csv', 'dataset/preprocessed/preprocess-test-network-standard-webtraffic-validate.csv'))
-    #MODEL.train(500,4)
+    MODEL = LSTMModel(3, 10,load_dataset('dataset/preprocessed/dataset-attack.csv', 'dataset/preprocessed/test-network-standard-webtraffic.csv', False),load_dataset('dataset/preprocessed/test-network-attack.csv', 'dataset/preprocessed/test-network-standard-webtraffic-validate.csv', False))
+    MODEL.train(1,1)
     app.run(debug=True)
