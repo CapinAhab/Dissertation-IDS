@@ -112,13 +112,7 @@ async fn dataset() -> Option<NamedFile> {
 //Options to train and tweak models
 #[get("/train")]
 async fn train() -> Option<NamedFile> {
-    //Only show train page if training dataset is installed
-    if Path::new("dataset/pcap").exists() {
-	NamedFile::open("pages/train.html").await.ok()
-    }
-    else{
-	NamedFile::open("pages/nomodel.html").await.ok()
-    }
+    NamedFile::open("pages/train.html").await.ok()
 }
 
 //Stats on current model
