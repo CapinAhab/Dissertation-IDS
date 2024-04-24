@@ -98,10 +98,7 @@ def livedata():
 
 @app.route('/genmodel', methods=['POST'])
 def genmodel():
-    form_data = request.form
-    for key, value in form_data.items():
-        print(f"Field: {key}, Value: {value}")
-    if request.form['premodel']:
+    if 'premodel' in request.form:
         MODEL = LSTMModel(int(request.form['layers']), int(request.form['neurons']),load_dataset('dataset/preprocessed/preprocess-dataset-attack.csv', 'dataset/preprocessed/preprocess-test-network-standard-webtraffic.csv', True),load_dataset('dataset/preprocessed/preprocess-test-network-attack.csv', 'dataset/preprocessed/preprocess-test-network-standard-webtraffic-validate.csv', True))
     else:
         MODEL = LSTMModel(int(request.form['layers']), int(request.form['neurons']),load_dataset('dataset/preprocessed/dataset-attack.csv', 'dataset/preprocessed/test-network-standard-webtraffic.csv', False),load_dataset('dataset/preprocessed/test-network-attack.csv', 'dataset/preprocessed/test-network-standard-webtraffic-validate.csv', False))
