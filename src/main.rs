@@ -59,14 +59,14 @@ async fn gettraffic(ws: WebSocket) -> rocket_ws::Channel<'static> {
 
 		    // Send the request
 		    let response = client.post("http://127.0.0.1:5000/livedata")
-			.body(serde_json::to_string(&value.clone()).expect("Failed to serialize"))
+			.body(value.to_json())
 			.header(reqwest::header::CONTENT_TYPE, "application/json")
 			.send()
 			.await;
 		    match response{
 			Ok(response) =>{
 			    if let Ok(json) = response.json::<serde_json::Value>().await{
-				if let Some(true) = json.get("your_json_key_here").and_then(|v | v.as_bool()) {
+				if let Some(true) = json.get("result").and_then(|v | v.as_bool()) {
 				    &value.set_malicious(true);
 				}
 				else{
@@ -131,19 +131,23 @@ async fn test_page() -> Option<NamedFile> {
 async fn preprocessdata(){
     //Need check so thread doesn't panic if tshark pre-processing hasn't been done
     if fs::metadata("./dataset/preprocessed/test-network-attack.csv").is_ok() {
-	preprocess::process_dataset("./dataset/preprocessed/test-network-attack.csv", "./dataset/preprocessed/preprocess-test-network-attack.csv");
+	preprocess::process_dataset("./dataset/preprocessed/test-network-attack.csv", "./dataset/preprocessed/preprocess-test-network-attack.csv", false);
+	preprocess::process_dataset("./dataset/preprocessed/test-network-attack.csv", "./dataset/preprocessed/preprocess-pca-test-network-attack.csv", true);
     }
 
     if fs::metadata("./dataset/preprocessed/test-network-standard-webtraffic.csv").is_ok() {
-	preprocess::process_dataset("./dataset/preprocessed/test-network-standard-webtraffic.csv", "./dataset/preprocessed/preprocess-test-network-standard-webtraffic.csv");
+	preprocess::process_dataset("./dataset/preprocessed/test-network-standard-webtraffic.csv", "./dataset/preprocessed/preprocess-test-network-standard-webtraffic.csv",false);
+	preprocess::process_dataset("./dataset/preprocessed/test-network-standard-webtraffic.csv", "./dataset/preprocessed/preprocess-pca-test-network-standard-webtraffic.csv",true);
     }
 
     if fs::metadata("./dataset/preprocessed/dataset-attack.csv").is_ok() {
-	preprocess::process_dataset("./dataset/preprocessed/dataset-attack.csv", "./dataset/preprocessed/preprocess-dataset-attack.csv");
+	preprocess::process_dataset("./dataset/preprocessed/dataset-attack.csv", "./dataset/preprocessed/preprocess-dataset-attack.csv",false);
+	preprocess::process_dataset("./dataset/preprocessed/dataset-attack.csv", "./dataset/preprocessed/preprocess-pca-dataset-attack.csv",true);
     }
 
     if fs::metadata("./dataset/preprocessed/test-network-standard-webtraffic-validate.csv").is_ok() {
-	preprocess::process_dataset("./dataset/preprocessed/test-network-standard-webtraffic-validate.csv", "./dataset/preprocessed/preprocess-test-network-standard-webtraffic-validate.csv");
+	preprocess::process_dataset("./dataset/preprocessed/test-network-standard-webtraffic-validate.csv", "./dataset/preprocessed/preprocess-test-network-standard-webtraffic-validate.csv",false);
+	preprocess::process_dataset("./dataset/preprocessed/test-network-standard-webtraffic-validate.csv", "./dataset/preprocessed/preprocess-pca-test-network-standard-webtraffic-validate.csv",true);
     }
 
 

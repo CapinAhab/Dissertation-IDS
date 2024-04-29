@@ -7,6 +7,27 @@ use pnet::packet::Packet;
 use pnet::packet::ethernet::{EthernetPacket, MutableEthernetPacket};
 use pnet::datalink::Config;
 use pnet::datalink::Channel;
+use linfa_preprocessing::norm_scaling::NormScaler;
+use linfa::prelude::*;
+
+
+//probably the wrong way to do this
+#[derive(Serialize, Deserialize)]
+struct PacketJson {
+    source_port: f64,
+    destination_port: f64,
+    sequence_number: f64,
+    acknowledgment_number: f64,
+    fin_flag: f64,
+    syn_flag: f64,
+    ack_flag: f64,
+    psh_flag: f64,
+    urg_flag: f64,
+    window_size: f64,
+    header_len: f64,
+    tcp_len: f64
+}
+
 
 //struct reprsenting packet data, simplified for the front end
 //inherits function that make it easy to convert to json
@@ -34,13 +55,15 @@ pub struct FrontEndPacketData{
 
 impl FrontEndPacketData {
     //Creates array of data to match dataset, not all data required for accurate prediction
-    pub fn to_array(&self) -> Array2<f64> {
-        Array2::from_shape_vec((1,12),
+    pub fn to_json(&self) -> String{
+	//Cant  scale individual values, need to convert to array
+        let mut array = Array2::from_shape_vec((1,12),
             vec![
                 self.source_port as f64,
                 self.destination_port as f64,
                 self.sequence_number as f64,
                 self.acknowledgment_number as f64,
+		//Need to cast to u8 first or error
                 self.fin_flag as u8 as f64,
                 self.syn_flag as u8 as f64,
                 self.ack_flag as u8 as f64,
@@ -49,7 +72,27 @@ impl FrontEndPacketData {
 		self.window_size as f64,
                 self.header_len as f64,
 		self.tcp_len as f64
-        ]).expect("REASON")
+            ]).expect("REASON");
+
+	let scaler = NormScaler::l2();
+	array = scaler.transform(array);
+
+	let json_data = PacketJson {
+	    source_port: array[[0,0]],
+	    destination_port: array[[0,1]],
+	    sequence_number: array[[0,2]],
+	    acknowledgment_number: array[[0,3]],
+	    fin_flag: array[[0,4]],
+	    syn_flag: array[[0,5]],
+	    ack_flag: array[[0,6]],
+	    psh_flag: array[[0,7]],
+	    urg_flag: array[[0,8]],
+	    window_size: array[[0,9]],
+	    header_len: array[[0,10]],
+	    tcp_len: array[[0,11]], 
+	};
+
+	return serde_json::to_string(&json_data).expect("Failed to serialize JSON");
     }
 
     pub fn set_malicious(&mut self, value: bool){

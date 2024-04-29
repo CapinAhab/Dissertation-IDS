@@ -42,8 +42,16 @@ fn load_csv(file_path: &str) -> Result<Array2<f64>, ReadError>{
     return linfa_datasets::array_from_csv(file, true, b',')
 }
 
-//Applies PCA to reduce dimentionality
 pub fn preprocess(data: Array2<f64>) -> Array2<f64>{
+    let mut dataset = Dataset::from(data);
+    //need to scale first or NaN errors in PCA
+    let scaler = NormScaler::l2();
+    dataset = scaler.transform(dataset);
+    return dataset.records().to_owned();
+}
+
+//Applies PCA to reduce dimentionality
+pub fn preprocess_pca(data: Array2<f64>) -> Array2<f64>{
     let mut dataset = Dataset::from(data);
     //need to scale first or NaN errors in PCA
     let scaler = NormScaler::l2();
@@ -72,10 +80,16 @@ fn save_to_csv(array: &Array2<f64>, file_path: &str) -> Result<(), Box<dyn Error
 }
 
 
-pub fn process_dataset(file_path: &str, save_path: &str){
+pub fn process_dataset(file_path: &str, save_path: &str, pca: bool){
     match load_csv(file_path){
 	Ok(dataset) => {
-	    let preprocessed_dataset = preprocess(dataset);
+	    if pca{
+		let preprocessed_dataset = preprocess_pca(dataset);
+	    }
+		else{
+		    
+		let preprocessed_dataset = preprocess(dataset);
+		}
 	    match save_to_csv(&preprocessed_dataset, save_path){
 		Ok(_done) => {
 		    println!("Done");
