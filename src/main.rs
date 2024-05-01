@@ -67,13 +67,13 @@ async fn gettraffic(ws: WebSocket) -> rocket_ws::Channel<'static> {
 			Ok(response) =>{
 			    if let Ok(json) = response.json::<serde_json::Value>().await{
 				if let Some(true) = json.get("result").and_then(|v | v.as_bool()) {
-				    &value.set_malicious(true);
+				    value.set_malicious(true);
 				}
 				else{
-				    &value.set_malicious(false);
+				    value.set_malicious(false);
 				}
 			    } else {
-				&value.set_malicious(true);
+				value.set_malicious(true);
 			    }
 			}
 			Err(e) => {

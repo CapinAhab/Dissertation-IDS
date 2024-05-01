@@ -83,13 +83,13 @@ fn save_to_csv(array: &Array2<f64>, file_path: &str) -> Result<(), Box<dyn Error
 pub fn process_dataset(file_path: &str, save_path: &str, pca: bool){
     match load_csv(file_path){
 	Ok(dataset) => {
+	    let preprocessed_dataset;
 	    if pca{
-		let preprocessed_dataset = preprocess_pca(dataset);
+		preprocessed_dataset = preprocess_pca(dataset);
 	    }
-		else{
-		    
-		let preprocessed_dataset = preprocess(dataset);
-		}
+	    else{
+		preprocessed_dataset = preprocess(dataset);
+	    }
 	    match save_to_csv(&preprocessed_dataset, save_path){
 		Ok(_done) => {
 		    println!("Done");
