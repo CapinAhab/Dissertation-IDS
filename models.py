@@ -6,6 +6,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import MinMaxScaler
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import LSTM, Dense
+from keras.optimizers import Adam
 
 app = Flask(__name__)
 
@@ -40,7 +41,7 @@ class LSTMModel:
         #Has on output as binary classification problem
         model.add(Dense(1, activation='sigmoid'))
 
-        model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
+        model.compile(loss='binary_crossentropy', optimizer=Adam(lr=0.001), metrics=['accuracy'])
         self.model = model
 
     def train(self, epochs, batch):
@@ -54,6 +55,7 @@ class LSTMModel:
 
     def classify(self, data):
         prediction = self.model.predict(data)
+        print(prediction)
         return prediction[0][0]
         
 
@@ -93,17 +95,14 @@ def livedata():
     if round(test) >= 1:
         return jsonify({"result": True})
     else:
-        abort(400)
+        return jsonify({"result": False})
 
 @app.route('/genmodel', methods=['POST'])
 def genmodel():
-    form_data = request.form
-    for key, value in form_data.items():
-        print(f"Field: {key}, Value: {value}")
-    if request.form['premodel']:
-        MODEL = LSTMModel(int(request.form['layers']), int(request.form['neurons']),load_dataset('dataset/preprocessed/preprocess-dataset-attack.csv', 'dataset/preprocessed/preprocess-test-network-standard-webtraffic.csv', True),load_dataset('dataset/preprocessed/preprocess-test-network-attack.csv', 'dataset/preprocessed/preprocess-test-network-standard-webtraffic-validate.csv', True))
+    if 'premodel' in request.form:
+        MODEL = LSTMModel(int(request.form['layers']), int(request.form['neurons']),load_dataset('dataset/preprocessed/preprocess-pca-dataset-attack.csv', 'dataset/preprocessed/preprocess-pca-test-network-standard-webtraffic.csv', True),load_dataset('dataset/preprocessed/preprocess-pca-test-network-attack.csv', 'dataset/preprocessed/preprocess-pca-test-network-standard-webtraffic-validate.csv', True))
     else:
-        MODEL = LSTMModel(int(request.form['layers']), int(request.form['neurons']),load_dataset('dataset/preprocessed/dataset-attack.csv', 'dataset/preprocessed/test-network-standard-webtraffic.csv', False),load_dataset('dataset/preprocessed/test-network-attack.csv', 'dataset/preprocessed/test-network-standard-webtraffic-validate.csv', False))
+        MODEL = LSTMModel(int(request.form['layers']), int(request.form['neurons']),load_dataset('dataset/preprocessed/preprocess-dataset-attack.csv', 'dataset/preprocessed/preprocess-test-network-standard-webtraffic.csv', True),load_dataset('dataset/preprocessed/preprocess-test-network-attack.csv', 'dataset/preprocessed/preprocess-test-network-standard-webtraffic-validate.csv', True))
 
     return "Data received successfully"
 

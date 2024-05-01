@@ -40,6 +40,7 @@ socket.addEventListener('message', (event) => {
     console.log('Message from server:', event.data);
 
     const jsonObject = JSON.parse(event.data);
+
     if (jsonObject.malicious) {
 	maliciousPackets++;
 	console.log("Malicious")
@@ -52,6 +53,11 @@ socket.addEventListener('message', (event) => {
         const maliciousDiv = document.getElementById('malicious-div');
         // Append the <p> element to the <div>
         maliciousDiv.appendChild(paragraph);
+
+	// Update malicious pings count in <p> element
+	const maliciousPacketsParagraph = document.getElementById('malicious-pings');
+	maliciousPacketsParagraph.textContent = `Malicious pings: ${maliciousPings}`;
+    
     }
 
     totalPackets++;
@@ -60,10 +66,7 @@ socket.addEventListener('message', (event) => {
     const totalPacketsParagraph = document.getElementById('total-pings');
     totalPacketsParagraph.textContent = `Total pings: ${totalPackets}`;
 
-    // Update malicious pings count in <p> element
-    const maliciousPacketsParagraph = document.getElementById('malicious-pings');
-    maliciousPacketsParagraph.textContent = `Malicious pings: ${maliciousPings}`;
-    
+   
     // Update chart data
     networkGraph.data.datasets[0].data.push(1);
     networkGraph.data.datasets[0].data.shift();
