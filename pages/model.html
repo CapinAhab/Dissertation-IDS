@@ -21,4 +21,21 @@
 	</div>
     </nav>   
   </body>
+  <h1 style="text-align: center;">How to create your own models</h1>
+  <h2>Creating the model</h2>
+  <img alt="model_create.webp" src="Selection showing how to create models"/>
+    <p>To create a new model simply use the highlighted form. When given three options, choose between PCA, layers, and neurons to define the structure of your model and specify the desired preprocessing steps. When the model has been created you will see "Default model" change to "Model created"</p>
+    <p>If you are testing the live system, avoid using PCA due to its high computational cost for live packet capture.</p>
+    <p>It is recommended to use at least 10 neurons. Keep in mind that larger models will take longer to train and test.</p>
+
+  <h2>Training the model</h2>
+  <img alt="train.webp" src="Selection showing how to train models"/>
+    <p>The highlighted form trains the currently in-use model.</p>
+    <p>The batch size is the number of packets given to the model at once; this lets the model find patterns in the sequence of packets and can increase accuracy.</p>
+    <p>The epochs are the number of times the data is processed through the model, but the higher the number, the greater the chance of overfitting, where the model predicts the dataset rather than identifying attacks.</p>
+
+  
+  <h2>Testing the model</h2>
+  <img alt="test.webp" src="Selection showing how to test models"/>
+  <p>The highlighted section shows the test button, this will test the model against a test dataset and return the accuracy. The 0% will be changed to whatever accuracy the model has when predicting the test database, be aware that this isn't reflective of the live systems performance.</p>
 </html>
