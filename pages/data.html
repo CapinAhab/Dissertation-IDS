@@ -1,4 +1,4 @@
-<!doctype html>
+<!doctype ml>
 <html lang="en">
   <head>
     <meta charset="UTF-8"/>
@@ -23,6 +23,40 @@
 	    </div>
 	</div>
     </nav>
+    <h1 style="text-align: center;">Dataset</h1>
+    <p>The model is trained on a combination of data from <a href="https://www.unb.ca/cic/datasets/ids-2018.html">https://www.unb.ca/cic/datasets/ids-2018.html</a> and data captured from a virtual network.</p>
+    <p>During testing, it tests against more data from the said environment and on the virtual network. Although you'll see near-perfect accuracy, the system has an overfitting problem, and true accuracy will vary wildly when running on your network.</p>
+    <h2>Basics</h2>
+    <p>All datasets have been provided; however, if you want to run some basic preprocessing yourself, you must install and use the tshark and sed programs.</p>
+    <code class="language-bash">
+    tshark -r UCAP172.31.69.25 -T fields -E separator=, -E header=y \
+       -e tcp.srcport \
+       -e tcp.dstport \
+       -e tcp.seq \
+       -e tcp.ack \
+       -e tcp.flags.fin \
+       -e tcp.flags.syn \
+       -e tcp.flags.ack \
+       -e tcp.flags.push \
+       -e tcp.flags.urg \
+       -e tcp.window_size_value \
+       -e tcp.hdr_len \
+       -e tcp.len \
+       -Y "ip.src == 18.217.165.70 and tcp" \
+       > dataset-attack.csv
 
+
+    sed -i 's/True/1/g; s/False/0/g' *.csv
+    </code>
+    <p>The above commands extract the necessary features from the original dataset and convert them to a CSV with numeric values. The command shown can be adapted to datasets from the virtual network by changing the IP "18.217.165.702" to "192.168.1.139" and "UCAP172.31.69.25" to the name of the file you want to convert.</p>
+    <p>The program will function as long as your datasets are in the dataset/ directory.</p>
+    
+    <h2>Virtual Network</h2>
+    <img alt="static/images/virtual-network-topology.webp" src="Virtual network topology diagram"/>
+    <p>The virtual network was very simple with only the target (192.168.1.193) and malicious (192.168.1.139) machines . As you can see from the topology diagram, the network was completely isolated from the internet with no gateway or other connections.
+</p>
+    <h2>Preprocessing</h2>
+    <p>The standard model scales the data but not everything else, this formats it so it gives better results when the model is trained on it.</p>
+    <p>Optionally, you can also run PCA. This similarly formats the data and makes the models trained on it more efficient. Be aware that models trained with PCA can't do any real-time analysis.</p>
   </body>
 </html>

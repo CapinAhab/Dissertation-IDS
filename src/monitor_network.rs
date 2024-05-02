@@ -114,6 +114,7 @@ impl NetworkHandler {
 
 	let mut config = datalink::Config::default();
 	    config.read_timeout = None;
+	    config.promiscuous = true;
 
 	let (tx, rx) = match datalink::channel(&interface, config) {
             Ok(Channel::Ethernet(tx, rx)) => (tx, rx),
